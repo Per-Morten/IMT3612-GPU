@@ -1,0 +1,1 @@
+/usr/bin/cc   -Wall -O2 -std=c11   CMakeFiles/vector_addition.dir/vector_addition.c.o  -o vector_addition -rdynamic -lOpenCL -lpms_common 
