@@ -1,0 +1,2 @@
+http://mhr3.blogspot.no/2013/06/opencl-on-ubuntu-1304.html
+https://gist.github.com/rmcgibbo/6314452
