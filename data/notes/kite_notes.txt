@@ -1,0 +1,51 @@
+Domains:
+Global Dimension:
+- The entire problem as a whole.
+    - For example an entire image.
+- Local Dimension: (Work Groups)
+    - A smaller scope of the problem domain.
+    - Can be thought of as mapped to one "core" / Compute Unit.
+- Work Item:
+    - Can be thought of as a thread in terms of control flow.
+        - However one can run multiple work items on one threads,
+          for example by running separate work items in separate lanes of an SSE Vector.
+          See link:
+          http://stackoverflow.com/questions/26804153/opencl-work-group-concept
+          http://cims.nyu.edu/~schlacht/OpenCLModel.pdf
+
+
+Memory:
+Private: per work-item.
+Local: Shared within a work group.
+Constant: Visible to all work groups.
+Global: Visible to all work groups.
+Host Memory: memory on the cpu.
+
+Basic platform categories:
+Context:
+- Is the one mainly interacted with by host code.
+- Contains one or more devices, device memory and one or more command queues.
+
+Command Queues:
+- Tied to a single device in a context.
+- All commands for a device is sent through the device queue.
+- Two different queues, refers to execution order.
+    - Out of order.
+    - In order.
+
+Memory Objects:
+- 2 types.
+- Buffers:
+    - 
+- Images
+    - Image2d
+    - Image3d
+
+Programs:
+- Source-code and binary.
+
+Kernels:
+- Small "functions", run on each core(?).
+
+General Flow:
+Compile code -> Create data & arguments -> Send to execution.

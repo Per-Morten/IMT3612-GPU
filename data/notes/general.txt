@@ -1,0 +1,6 @@
+General:
+- Be careful of resizing window stuff while running openCL calculations.
+    - The OS might cannibalize the memory on the graphics card.
+    - Find out a way to script proper reboots of the graphics card. 
+    - See:
+    http://askubuntu.com/questions/311050/how-to-restart-gpu-without-reboot-softreset
