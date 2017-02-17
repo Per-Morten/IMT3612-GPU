@@ -119,9 +119,9 @@ pms_stringify_error(const cl_int status_code)
 
 void 
 pms_check_cl_error(const cl_int status,
-                const char* operation,
-                const char* filename,
-                const int32_t line)
+                   const char* operation,
+                   const char* filename,
+                   const int32_t line)
 {
     if (status != CL_SUCCESS)
     {
