@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define PMS_CHECK_CL_ERROR(E, S) pms_check_cl_error(E,S,__FILE__,__LINE__)
+#define PMS_CHECK_CL_ERROR(error, text) pms_check_cl_error(error, text, __FILE__, __LINE__)
 
 #define PMS_ERROR(fmt, ...) \
 pms_log(stderr, "ERROR" ,__func__, __LINE__, fmt, #__VA_ARGS__); \
@@ -46,3 +46,9 @@ int32_t
 pms_read_kernel(const char* filename, 
                 char* buffer, 
                 size_t size_of_buffer);
+
+int32_t
+pms_create_program(cl_context context, 
+                   const char* kernel_filepath,
+                   cl_program* program,
+                   size_t size_of_file);
