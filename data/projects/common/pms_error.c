@@ -4,6 +4,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <CL/cl.h>
 #include <stdio.h>
+#include <pms_common.h>
 
 const char* 
 pms_stringify_error(const cl_int status_code)
@@ -124,14 +125,11 @@ pms_check_cl_error(const cl_int status,
 {
     if (status != CL_SUCCESS)
     {
-        fprintf(stderr,
-                "Error during operation '%s', in '%s' on line %d\nError code was \"%s\" (%d)\n",
-                operation,
-                filename,
-                line,
-                pms_stringify_error(status),
-                status);
-
-        exit(EXIT_FAILURE);
+        PMS_ERROR("Error during operation '%s', in '%s' on line %d\nError code was \"%s\" (%d)\n",
+                  operation,
+                  filename,
+                  line,
+                  pms_stringify_error(status),
+                  status);
     }
 }
