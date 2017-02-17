@@ -44,52 +44,6 @@ pms_get_cpu_platform_id(cl_device_id* out_device_id)
     return PMS_SUCCESS;
 }
 
-int32_t
-pms_create_program(cl_context context, 
-                   const char* kernel_filepath,
-                   cl_program* program)
-{
-    // For some reason it crashes if I try to use a character pointer o.O?
-    char* kernel_source = calloc(2048, sizeof(char));
-    int32_t pms_error = pms_read_kernel(kernel_filepath, kernel_source, 2048);
-    if (pms_error == PMS_FAILURE)
-    {
-        fprintf(stderr, "Could not read file %s\n", kernel_filepath);
-        return PMS_FAILURE;
-    }
-
-    cl_int error;
-    *program = clCreateProgramWithSource(context, 1,
-                                         (const char**)&kernel_source, 
-                                         NULL,
-                                         &error);
-
-    free(kernel_source);
-    PMS_CHECK_CL_ERROR(error, "create_command_with_source");
-    return PMS_SUCCESS;
-}
-
-int32_t
-pms_build_program(cl_program program, cl_device_id device_id)
-{
-    // Building program
-    cl_int error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-    if (error != CL_SUCCESS)
-    {
-        size_t length = 0;
-        char buffer[2048];
-
-        fprintf(stderr, "Failed to build program!\nError: %s\n", pms_stringify_error(error));
-        error = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 
-                                      sizeof(buffer), buffer, &length); 
-
-        PMS_CHECK_CL_ERROR(error, "getting_build_info");
-        fprintf(stderr, "%s\n", buffer);
-        return PMS_FAILURE;
-    }
-    return PMS_SUCCESS;
-}
-
 void
 pms_create_matrixes(float** lhs, float** rhs, float** result, const size_t count)
 {
@@ -132,7 +86,7 @@ main(int argc, char** argv)
     // Reading program from file
     cl_program program;
     char kernel_filepath[] = "kernels/vector_addition.cl";
-    int32_t result = pms_create_program(context, kernel_filepath, &program);
+    int32_t result = pms_create_program(context, kernel_filepath, &program, 2048);
     if (result != PMS_SUCCESS)
     {
         return EXIT_FAILURE;
