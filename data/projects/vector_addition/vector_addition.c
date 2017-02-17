@@ -14,7 +14,7 @@ pms_get_cpu_platform_id(cl_device_id* out_device_id)
     cl_uint count = 0;
     cl_int error = clGetPlatformIDs(1, NULL, &count);
 
-    PMS_CHECK_ERROR(error, "get_platform_ids");
+    PMS_CHECK_CL_ERROR(error, "get_platform_ids");
     if (count == 0)
     {
         return PMS_FAILURE;
@@ -22,7 +22,7 @@ pms_get_cpu_platform_id(cl_device_id* out_device_id)
 
     cl_platform_id platform_ids[count];
     error = clGetPlatformIDs(1, platform_ids, NULL);
-    PMS_CHECK_ERROR(error, "get_platform_ids");
+    PMS_CHECK_CL_ERROR(error, "get_platform_ids");
     for (size_t i = 0; i < count; ++i)
     {
         error = clGetDeviceIDs(platform_ids[i],
@@ -38,7 +38,7 @@ pms_get_cpu_platform_id(cl_device_id* out_device_id)
 
     if (out_device_id == NULL)
     {
-        PMS_CHECK_ERROR(error, "get_device_id");
+        PMS_CHECK_CL_ERROR(error, "get_device_id");
     }
 
     return PMS_SUCCESS;
@@ -49,7 +49,7 @@ pms_create_program(cl_context context,
                    const char* kernel_filepath,
                    cl_program* program)
 {
-    // For some reason it crashes if I try to use a character array o.O?
+    // For some reason it crashes if I try to use a character pointer o.O?
     char* kernel_source = calloc(2048, sizeof(char));
     int32_t pms_error = pms_read_kernel(kernel_filepath, kernel_source, 2048);
     if (pms_error == PMS_FAILURE)
@@ -65,7 +65,7 @@ pms_create_program(cl_context context,
                                          &error);
 
     free(kernel_source);
-    PMS_CHECK_ERROR(error, "create_command_with_source");
+    PMS_CHECK_CL_ERROR(error, "create_command_with_source");
     return PMS_SUCCESS;
 }
 
@@ -83,7 +83,7 @@ pms_build_program(cl_program program, cl_device_id device_id)
         error = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 
                                       sizeof(buffer), buffer, &length); 
 
-        PMS_CHECK_ERROR(error, "getting_build_info");
+        PMS_CHECK_CL_ERROR(error, "getting_build_info");
         fprintf(stderr, "%s\n", buffer);
         return PMS_FAILURE;
     }
@@ -107,6 +107,7 @@ pms_create_matrixes(float** lhs, float** rhs, float** result, const size_t count
 int
 main(int argc, char** argv)
 {
+    // Setup device
     cl_device_id device_id;
     pms_get_cpu_platform_id(&device_id);
     pms_output_device_info(device_id);
@@ -118,7 +119,7 @@ main(int argc, char** argv)
                                          NULL, 
                                          NULL, 
                                          &error);
-    PMS_CHECK_ERROR(error, "create_context");
+    PMS_CHECK_CL_ERROR(error, "create_context");
 
     // Create command queue
     cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, 
@@ -126,7 +127,7 @@ main(int argc, char** argv)
                                                                         NULL,
                                                                         &error);
 
-    PMS_CHECK_ERROR(error, "create_command_queue");
+    PMS_CHECK_CL_ERROR(error, "create_command_queue");
 
     // Reading program from file
     cl_program program;
@@ -146,11 +147,11 @@ main(int argc, char** argv)
 
     // Creating kernel
     cl_kernel vector_addition_kernel = clCreateKernel(program, "vector_addition", &error);
-    PMS_CHECK_ERROR(error, "create kernel");
+    PMS_CHECK_CL_ERROR(error, "create kernel");
 
 
     // Creating matrix
-    const size_t count = (1 << 24);
+    const size_t count = (1 << 10);
     float* h_lhs;
     float* h_rhs;
     float* h_result;
@@ -158,31 +159,31 @@ main(int argc, char** argv)
 
     // Creating buffers
     cl_mem d_lhs = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * count, NULL, &error);
-    PMS_CHECK_ERROR(error, "create_d_lhs_buffer");
+    PMS_CHECK_CL_ERROR(error, "create_d_lhs_buffer");
 
     cl_mem d_rhs = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * count, NULL, &error);
-    PMS_CHECK_ERROR(error, "create_d_rhs_buffer");
+    PMS_CHECK_CL_ERROR(error, "create_d_rhs_buffer");
 
     cl_mem d_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, &error);
-    PMS_CHECK_ERROR(error, "create_d_result_buffer");
+    PMS_CHECK_CL_ERROR(error, "create_d_result_buffer");
 
     // Copying over buffers
     error = clEnqueueWriteBuffer(command_queue, d_lhs, CL_TRUE, 0, 
                                  sizeof(float) * count, h_lhs, 0, 
                                  NULL, NULL);
-    PMS_CHECK_ERROR(error, "copying_h_lhs_to_d_lhs");
+    PMS_CHECK_CL_ERROR(error, "copying_h_lhs_to_d_lhs");
 
     error = clEnqueueWriteBuffer(command_queue, d_rhs, CL_TRUE, 0, 
                                  sizeof(float) * count, h_rhs, 0, 
                                  NULL, NULL);
-    PMS_CHECK_ERROR(error, "copying_h_rhs_to_d_rhs");
+    PMS_CHECK_CL_ERROR(error, "copying_h_rhs_to_d_rhs");
 
     // Sending the arguments to the kernel
     error =  clSetKernelArg(vector_addition_kernel, 0, sizeof(cl_mem), &d_lhs);
     error |= clSetKernelArg(vector_addition_kernel, 1, sizeof(cl_mem), &d_rhs);
     error |= clSetKernelArg(vector_addition_kernel, 2, sizeof(cl_mem), &d_result);
     error |= clSetKernelArg(vector_addition_kernel, 3, sizeof(size_t), &count);
-    PMS_CHECK_ERROR(error, "sending_arguments_to_kernel");
+    PMS_CHECK_CL_ERROR(error, "sending_arguments_to_kernel");
 
 
     // Its happening! =D
@@ -192,10 +193,10 @@ main(int argc, char** argv)
     const size_t global_domain_size = count;
     error = clEnqueueNDRangeKernel(command_queue, vector_addition_kernel, 
                                    1, NULL, &global_domain_size, NULL, 0, NULL, NULL);
-    PMS_CHECK_ERROR(error, "enqueueing_kernal");
+    PMS_CHECK_CL_ERROR(error, "enqueueing_kernal");
 
     error = clFinish(command_queue);
-    PMS_CHECK_ERROR(error, "waiting_for_cl_to_finish");
+    PMS_CHECK_CL_ERROR(error, "waiting_for_cl_to_finish");
 
     const double stop = omp_get_wtime();
     printf("Kernel ran for wtime: %lf seconds\n", stop - start);
@@ -205,7 +206,7 @@ main(int argc, char** argv)
     error = clEnqueueReadBuffer(command_queue, d_result, CL_TRUE, 0, 
                                 sizeof(float) * count, h_result, 0, 
                                 NULL, NULL);
-    PMS_CHECK_ERROR(error, "reading_output_array");
+    PMS_CHECK_CL_ERROR(error, "reading_output_array");
 
     uint32_t number_of_correct_calculations = 0;
     for (size_t i = 0; i < count; ++i)
