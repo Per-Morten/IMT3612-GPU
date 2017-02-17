@@ -5,4 +5,5 @@ add_library(pms_common
     pms_device_info.c 
     pms_error.c 
     pms_read_kernel.c
+    pms_log.c
 )
