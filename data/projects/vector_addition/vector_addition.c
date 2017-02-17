@@ -68,11 +68,8 @@ main(int argc, char** argv)
 
     // Create context
     cl_int error = 0;
-    cl_context context = clCreateContext(NULL, 1, 
-                                         &device_id, 
-                                         NULL, 
-                                         NULL, 
-                                         &error);
+    cl_context context = clCreateContext(NULL, 1, &device_id, 
+                                         NULL, NULL, &error);
     PMS_CHECK_CL_ERROR(error, "create_context");
 
     // Create command queue
@@ -165,8 +162,7 @@ main(int argc, char** argv)
     uint32_t number_of_correct_calculations = 0;
     for (size_t i = 0; i < count; ++i)
     {
-        float tmp = h_lhs[i] + h_rhs[i];
-        tmp -= h_result[i];
+        const float tmp = (h_lhs[i] + h_rhs[i]) - h_result[i];
         if (powf(tmp, 2) < powf(0.001f, 2))
         {
             ++number_of_correct_calculations;
