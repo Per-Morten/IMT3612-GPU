@@ -117,7 +117,7 @@ pms_stringify_error(const cl_int status_code)
 }
 
 void 
-pms_check_error(const cl_int status,
+pms_check_cl_error(const cl_int status,
                 const char* operation,
                 const char* filename,
                 const int32_t line)
@@ -135,8 +135,3 @@ pms_check_error(const cl_int status,
         exit(EXIT_FAILURE);
     }
 }
-
-#define PMS_CHECK_ERROR(E, S) pms_check_error(E,S,__FILE__,__LINE__)
-
-#define PMS_FAILURE -1
-#define PMS_SUCCESS 0
