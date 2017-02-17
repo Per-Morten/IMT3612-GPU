@@ -52,3 +52,7 @@ pms_create_program(cl_context context,
                    const char* kernel_filepath,
                    cl_program* program,
                    size_t size_of_file);
+
+int32_t
+pms_build_program(cl_program program, 
+                  cl_device_id device_id);
