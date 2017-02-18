@@ -24,8 +24,17 @@ pms_check_cl_error(error, text, __FILE__, __LINE__);
 /// \warning Will terminate the program.
 ///////////////////////////////////////////////////////////////////////////////
 #define PMS_ERROR(fmt, ...) \
-pms_log(stderr, "ERROR" ,__func__, __LINE__, fmt, ##__VA_ARGS__); \
+pms_log(stderr, "ERROR", __func__, __LINE__, fmt, ##__VA_ARGS__); \
 exit(EXIT_FAILURE);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Used to log recoverable errors and warn about behavior.
+///
+/// \param fmt The format of the message to be logged.
+/// \param ... va_list containing arguments to fmt. 
+///////////////////////////////////////////////////////////////////////////////
+#define PMS_WARN(fmt, ...) \
+pms_log(stdout, "WARN", __func__, __LINE__, fmt, ##__VA_ARGS__);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Used to log general info.
@@ -35,6 +44,19 @@ exit(EXIT_FAILURE);
 ///////////////////////////////////////////////////////////////////////////////
 #define PMS_INFO(fmt, ...) \
 pms_log(stdout, "INFO", __func__, __LINE__, fmt, ##__VA_ARGS__);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Used for debug log, i.e. not on by default.
+///
+/// \param fmt The format of the message to be logged.
+/// \param ... va_list containing arguments to fmt.
+///////////////////////////////////////////////////////////////////////////////
+#ifdef PMS_DEBUG_ON
+#define PMS_DEBUG(fmt, ...) \
+pms_log(stdout, "DEBUG", __func__, __LINE__, fmt, ##__VA_ARGS__);
+#else
+#define PMS_DEBUG(fmt, ...) 
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Constant value used to indicate failure of a function to do it's
