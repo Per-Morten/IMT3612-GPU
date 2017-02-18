@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
-project (vector_addition)
+project (exercise02)
 
 # The version number.
-set (vector_addition_VERSION_MAJOR 1)
-set (vector_addition_VERSION_MINOR 0)
+set (exercise02_VERSION_MAJOR 1)
+set (exercise02_VERSION_MINOR 0)
 
 # add the binary tree to the search path for include files
 # so that we will find TutorialConfig.h
@@ -15,7 +15,7 @@ set(GCC_FLAGS "-Wall -O2 -std=c11 -fopenmp")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_FLAGS}")
 
 
-add_executable(vector_addition 
-    vector_addition.c
+add_executable(exercise02 
+    exercise02.c
 )
-target_link_libraries(vector_addition OpenCL pms_common)
+target_link_libraries(exercise02 OpenCL pms_common)
