@@ -4,4 +4,5 @@ project (gpu_programming)
 subdirs(
     common
     exercise02
+    exercise04
 )
