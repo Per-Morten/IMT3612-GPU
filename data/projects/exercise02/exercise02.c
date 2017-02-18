@@ -82,7 +82,7 @@ main(int argc, char** argv)
 
     // Reading program from file
     cl_program program;
-    char kernel_filepath[] = "kernels/vector_addition.cl";
+    char kernel_filepath[] = "kernels/vec_add_2.cl";
     int32_t result = pms_create_program(context, kernel_filepath, &program, 2048);
     if (result != PMS_SUCCESS)
     {
@@ -97,7 +97,7 @@ main(int argc, char** argv)
     }
 
     // Creating kernel
-    cl_kernel vector_addition_kernel = clCreateKernel(program, "vector_addition", &error);
+    cl_kernel vector_addition_kernel = clCreateKernel(program, "vec_add_2", &error);
     PMS_CHECK_CL_ERROR(error, "create kernel");
 
 

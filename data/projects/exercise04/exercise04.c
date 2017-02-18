@@ -3,7 +3,6 @@
 #include <omp.h>
 #include <CL/cl.h>
 
-
 #include <pms_common.h>
 
 int32_t
@@ -36,7 +35,7 @@ setup_kernel(cl_context context,
              cl_program* out_program,
              cl_kernel* out_kernel)
 {
-    char kernel_filepath[] = "kernels/vector_addition.cl";
+    char kernel_filepath[] = "kernels/vec_add_2.cl";
     int32_t result = pms_create_program(context, kernel_filepath, out_program, 2048);
     if (result != PMS_SUCCESS)
     {
@@ -50,7 +49,7 @@ setup_kernel(cl_context context,
     }
 
     cl_int error = 0;
-    *out_kernel = clCreateKernel(*out_program, "vector_addition", &error);
+    *out_kernel = clCreateKernel(*out_program, "vec_add_2", &error);
     PMS_CHECK_CL_ERROR(error, "create kernel");
 
     return PMS_SUCCESS;
