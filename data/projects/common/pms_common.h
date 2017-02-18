@@ -24,7 +24,7 @@ pms_check_cl_error(error, text, __FILE__, __LINE__);
 /// \warning Will terminate the program.
 ///////////////////////////////////////////////////////////////////////////////
 #define PMS_ERROR(fmt, ...) \
-pms_log(stderr, "ERROR" ,__func__, __LINE__, fmt, #__VA_ARGS__); \
+pms_log(stderr, "ERROR" ,__func__, __LINE__, fmt, ##__VA_ARGS__); \
 exit(EXIT_FAILURE);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ exit(EXIT_FAILURE);
 /// \param ... va_list containing arguments to fmt.
 ///////////////////////////////////////////////////////////////////////////////
 #define PMS_INFO(fmt, ...) \
-pms_log(stdout, "INFO", __func__, __LINE__, fmt, #__VA_ARGS__);
+pms_log(stdout, "INFO", __func__, __LINE__, fmt, ##__VA_ARGS__);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Constant value used to indicate failure of a function to do it's

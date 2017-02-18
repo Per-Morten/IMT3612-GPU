@@ -10,12 +10,15 @@ pms_log(FILE* file,
         const char* fmt,
         ...)
 {
-    va_list args;
-    va_start(args, fmt);
-    fprintf(file, "[%-5s]: %-8s:%4d: ", type, func, line); 
-    vfprintf(file, fmt, args);
-    fprintf(file, "\n");
-    va_end(args);
+    va_list args1;
+    va_start(args1, fmt);
+    va_list args2;
+    va_copy(args2, args1);
+    char buffer[1+vsnprintf(NULL, 0, fmt, args1)];
+    va_end(args1);
+    vsnprintf(buffer, sizeof(buffer), fmt, args2);
+    va_end(args2);
+    fprintf(file, "[%-5s]: %-20s:%4d: %s\n", type, func, line, buffer);
 
     fflush(file);
 }
