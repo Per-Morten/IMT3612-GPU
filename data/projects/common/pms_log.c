@@ -18,7 +18,7 @@ pms_log(FILE* file,
     va_end(args1);
     vsnprintf(buffer, sizeof(buffer), fmt, args2);
     va_end(args2);
-    fprintf(file, "[%-5s]: %-20s:%4d: %s\n", type, func, line, buffer);
+    fprintf(file, "[%-5s]: %-25s:%4d: %s\n", type, func, line, buffer);
 
     fflush(file);
 }
