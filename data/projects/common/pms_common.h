@@ -137,8 +137,22 @@ pms_create_program(cl_context context,
 /// \param program The program to build.
 /// \param device_id The id of the device to build the program on.
 ///
-/// \return PMS_SUCCESS on success, PMS_FAILRE on failure, or termination.
+/// \return PMS_SUCCESS on success, PMS_FAILURE on failure, or termination.
 ///////////////////////////////////////////////////////////////////////////////
 int32_t
 pms_build_program(cl_program program, 
                   cl_device_id device_id);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Gets the ID of the device that can be used to run OpenCL on.
+///  
+/// \param device_type The type of device to look for.
+/// \param out_device_id out parameter to store the device_id in.
+///
+/// \return PMS_SUCCESS on success, PMS_FAILURE on failure.
+///
+/// \todo Support more than just one device id.
+///////////////////////////////////////////////////////////////////////////////
+int32_t
+pms_get_device_id(cl_device_type device_type,
+                  cl_device_id* out_device_id);

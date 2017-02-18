@@ -8,4 +8,7 @@ add_library(pms_common
     pms_error.c 
     pms_log.c
     pms_read_kernel.c
+    pms_get_device_id.c
 )
+
+target_link_libraries(pms_common OpenCL)
