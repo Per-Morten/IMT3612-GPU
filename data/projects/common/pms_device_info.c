@@ -12,7 +12,7 @@
 //  define VERBOSE if you want to print info about work groups sizes
 //#define  VERBOSE 1
 #ifdef VERBOSE
-     extern int pms_stringify_error(const cl_int);
+     extern const char* pms_stringify_error(const cl_int);
 #endif
 
 int32_t 
@@ -33,41 +33,46 @@ pms_output_device_info(const cl_device_id device_id)
     error = clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(device_name), &device_name, NULL);
     if (error != CL_SUCCESS)
     {
-        printf("Error: Failed to access device name!\n");
+        PMS_WARN("Error: Failed to access device name!");
         return PMS_FAILURE;
     }
-    printf(" \n Device is  %s ",device_name);
+    PMS_INFO("Device is %s ",device_name);
 
+    char type[1024] = {0};
     error = clGetDeviceInfo(device_id, CL_DEVICE_TYPE, sizeof(device_type), &device_type, NULL);
     if (error != CL_SUCCESS)
     {
-        printf("Error: Failed to access device type information!\n");
+        PMS_WARN("Error: Failed to access device type information!");
         return PMS_FAILURE;
     }
-    if(device_type  == CL_DEVICE_TYPE_GPU)
-       printf(" GPU from ");
-
+    if (device_type  == CL_DEVICE_TYPE_GPU)
+    {
+       strcat(type, "GPU from ");
+    }
     else if (device_type == CL_DEVICE_TYPE_CPU)
-       printf("\n CPU from ");
-
+    {
+       strcat(type, "CPU from ");
+    }
     else 
-       printf("\n non  CPU or GPU processor from ");
+    {
+        strcat(type, "Non CPU or GPU processor from ");
+    }
 
     error = clGetDeviceInfo(device_id, CL_DEVICE_VENDOR, sizeof(vendor_name), &vendor_name, NULL);
     if (error != CL_SUCCESS)
     {
-        printf("Error: Failed to access device vendor name!\n");
+        PMS_WARN("Error: Failed to access device vendor name!");
         return PMS_FAILURE;
     }
-    printf(" %s ",vendor_name);
+    PMS_INFO("%s %s ",type, vendor_name);
 
     error = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &comp_units, NULL);
     if (error != CL_SUCCESS)
     {
-        printf("Error: Failed to access device number of compute units !\n");
+        PMS_WARN("Error: Failed to access device number of compute units!");
         return PMS_FAILURE;
     }
-    printf(" with a max of %d compute units \n",comp_units);
+    PMS_INFO(" with a max of %d compute units",comp_units);
 
 #ifdef VERBOSE
 //
@@ -77,36 +82,35 @@ pms_output_device_info(const cl_device_id device_id)
                                &max_work_itm_dims, NULL);
     if (error != CL_SUCCESS)
     {
-        printf("Error: Failed to get device Info (CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS)!\n",
-                                                                            error_code(error));
+        PMS_WARN("Error: Failed to get device Info (CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS) %s!",
+                                                                            pms_stringify_error(error));
         return PMS_FAILURE;
     }
     
     max_loc_size = (size_t*)malloc(max_work_itm_dims * sizeof(size_t));
     if(max_loc_size == NULL){
-       printf(" malloc failed\n");
+       PMS_INFO("malloc failed");
        return PMS_FAILURE;
     }
     error = clGetDeviceInfo( device_id, CL_DEVICE_MAX_WORK_ITEM_SIZES, max_work_itm_dims* sizeof(size_t), 
                                max_loc_size, NULL);
     if (error != CL_SUCCESS)
     {
-        printf("Error: Failed to get device Info (CL_DEVICE_MAX_WORK_ITEM_SIZES)!\n",error_code(error));
+        PMS_WARN("Error: Failed to get device Info (CL_DEVICE_MAX_WORK_ITEM_SIZES)! %s",pms_stringify_error(error));
         return PMS_FAILURE;
     }
     error = clGetDeviceInfo( device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), 
                                &max_wrkgrp_size, NULL);
     if (error != CL_SUCCESS)
     {
-        printf("Error: Failed to get device Info (CL_DEVICE_MAX_WORK_GROUP_SIZE)!\n",error_code(error));
+        PMS_WARN("Error: Failed to get device Info (CL_DEVICE_MAX_WORK_GROUP_SIZE)! %s",pms_stringify_error(error));
         return PMS_FAILURE;
     }
-   printf("work group, work item information");
-   printf("\n max loc dim ");
+   PMS_INFO("work group, work item information");
+   PMS_INFO("max loc dim ");
    for(int i=0; i< max_work_itm_dims; i++)
-     printf(" %d ",(int)(*(max_loc_size+i)));
-   printf("\n");
-   printf(" Max work group size = %d\n",(int)max_wrkgrp_size);
+     PMS_INFO(" %d ",(int)(*(max_loc_size+i)));
+   PMS_INFO("Max work group size = %d",(int)max_wrkgrp_size);
 #endif
 
     return PMS_SUCCESS;
