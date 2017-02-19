@@ -10,8 +10,10 @@ setup_opencl(cl_device_id* out_device_id,
              cl_context* out_context,
              cl_command_queue* out_command_queue)
 {
+    size_t device_count;
     pms_get_device_id(CL_DEVICE_TYPE_CPU,
-                      out_device_id);
+                      out_device_id,
+                      &device_count);
     pms_output_device_info(*out_device_id);
 
     cl_int error = 0;

@@ -6,11 +6,13 @@
 
 int32_t
 setup_opencl(cl_device_id* out_device_id,
+             size_t* out_device_count,
              cl_context* out_context,
              cl_command_queue* out_command_queue)
 {
-    pms_get_device_id(CL_DEVICE_TYPE_CPU,
-                      out_device_id);
+    pms_get_device_id(CL_DEVICE_TYPE_ALL,
+                      out_device_id,
+                      out_device_count);
 
     cl_int error = 0;
     *out_context = clCreateContext(NULL, 1, out_device_id, 
@@ -202,9 +204,11 @@ main(int argc, char** argv)
 {
     PMS_INFO("Setting up OpenCL");
     cl_device_id device_id;
+    size_t device_count;
     cl_context context;
     cl_command_queue command_queue;
-    setup_opencl(&device_id, &context, &command_queue);
+    setup_opencl(&device_id, &device_count, &context, &command_queue);
+    PMS_INFO("Device count: %zu", device_count);
 
     PMS_INFO("Setting up kernel");
     cl_program kernel_program;
