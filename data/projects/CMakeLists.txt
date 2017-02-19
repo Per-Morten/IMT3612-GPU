@@ -5,4 +5,5 @@ subdirs(
     common
     exercise02
     exercise04
+    exercise05
 )
