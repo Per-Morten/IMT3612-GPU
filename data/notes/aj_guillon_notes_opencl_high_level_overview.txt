@@ -1,0 +1,290 @@
+Taken from:
+https://www.youtube.com/watch?v=8D6yhpiQVVI&list=PLDivN33Lbf6cLqZ5_i_k0KeMaQKEctMgS
+
+OpenCL Use Cases:
+- Fast permutations.
+- Data translation.
+- Numerical software.
+OpenCL is not just for numerics.
+
+OpenCL Models
+- Device Model. 
+    - What devices look like inside.
+- Execution Model.
+    - How work gets done on devices.
+- Memory Model.
+    - How devices and host see data.
+- Host API.
+    - How the host controls the devices.
+
+OpenCL Specification Parts:
+- Core Specification (FULL_PROFILE)
+    - All complete implementations of OpenCL must support this.
+- Embedded Profile (EMBEDDED_PROFILE)
+    - Relaxation of FULL_PROFILE.
+    - Intentioned to target Hand-held devices.
+- Extensions
+    - Additions to the specification.
+    - Might become part of the core specification later.
+
+OpenCL Components:
+- C Host API.
+    - What to call from host.
+    - Main part that application programmers use.
+- OpenCL C
+    - Based on C99.
+    - Many built-in functions.
+
+OpenCL Models:
+1 Device Model
+1.1 Compute Unit (CU)
+    - Contains Processing Units.
+1.1.1 Processing Element (PE)
+    - Simple processor.
+    - All instructions are executed on the processing element.
+    - Do NOT think of a processing element a normal processor!
+    - PE's are contained in Compute Units.
+    - Don't think of the processing elements individually, think of them as groups.
+    - Don't think: 15 CU * (8 PE/CU) = 120 "Processors"
+    - Don't think: 15 CU * (8 PE/CU) = 120 "Processing Elements"
+    - Think: "15 CU's, each with 8 PEs"
+
+2 Memory Model On the Device (Several memory regions)
+In C or C++: Stack and Heap.
+In OpenCL:
+2.1 Global Memory
+    - Shared with all processing elements.
+    - Host can access this memory.
+        - Memory map.
+        - Copy data to/from global memory.
+    - OpenCL persistent storage.
+        - Not in terms of hard disk. 
+            - In terms of persisting through several executions.
+        - Other memory regions are scratch space.
+2.2 Constant Memory
+    - Shared with all processing elements.
+    - Read-only memory.
+    - Very efficient way to share data with all device PEs.
+    - Not persistent
+2.3 Local Memory (One pr CU)
+    - Shared with all PEs.
+    - Efficient way to share data with all CU PEs.
+    - Cannot be accessed by other compute units.
+    - Not persistent.
+2.4 Private Memory (One pr PE)
+    - Accessible by a single processing element.
+    - No other PE can access this memory!
+    - Not persistent.
+    - "Fast as fuck?".
+
+3 Execution Model
+3.1 Kernel Functions:
+3.1.1 OpenCL Executes kernel functions on the device
+    - Executed on the device.
+    - Ordinary functions with special signature.
+    - Does not have anything to do with user space vs kernel space.
+3.1.2 Kernel calls have two parts
+    - Ordinary function argument list.
+    - External execution parameters that control parallelism.
+3.2 Role of the Host in Kernel Execution:
+    - Coordinates execution
+        - Does not participate itself.
+    - Provides arguments to the kernel.
+    - Provides execution parameters to launch the kernel.
+    - Several ways to call kernel functions, however there are one that is the most common one.
+3.3 NDRange: Execution strategy.
+    - The same kernel function will be invoked many times. (*invocation =   function being run many times, not necessarily the same as a call).
+        - The argument list is identical for all invocations.
+    - Basically we call the same function over and over.
+    - How many times we do this is dictated by the execution parameters.
+    - Host sets extra execution parameters prior to launch.
+3.4 NDRange: Simple Example.    
+    - Can be seen as a for loop. 
+    - Another way to think: Index Space.
+3.5 NDRange: Identifying the call
+    - How do kernel functions know what to work on?
+        - The argument list is identical.
+    - Insight: Execution parameters provide an index space.
+        - Each function invocation can access its index.
+        - "I know that I am call 3 of 10"
+    - The Index space is n-Dimensional.
+3.6 NDRange: A for Loop?
+    // All except parameters are provided FOR me.
+    // size = global work size
+    // i = global id
+    for (size_t i = 0; i < size; ++i)
+    {
+        // foo knows of i, and size.
+        foo(a,b,c); //a,b,c provided BY me.
+    }
+3.7 NDRange: Work Offset
+    // offset = global work offset
+    for (size_t j = offset; j < (size + offset); ++j)
+    {
+        bar(a);
+    }
+3.8 NDRange: Multiple for loops
+    // The three for loops are the work dimension.
+    for (size_t x = 0; x < size_x; ++x)
+    {
+        for(size_t y = 0; y < size_y; ++y)
+        {
+            for (size_t z = 0; z < size_z; ++z)
+            {
+                foo(a,b,c) // independent of the loop variables.
+            }
+        }
+    }
+3.9 NDRange As Index Space: Another View
+    - Don't think of for loops per se
+        - Inherently sequential.
+        - You have more like a parallel for.
+    - Think of a set of indices.
+        - Elements are n-element tuples.
+    - Each invocation pulls a "random" index from the set.
+    - The set is populated before kernel execution.
+    - Kernels pull an index out and run.
+    - When the index set is empty the kernel terminates.
+3.10 NDRange: Definitions
+    - Work-item: Invocation of the kernel for a particular index. (i in the for loop)
+    - Global ID: globally unique id for a work-item (from index space) (i's numerical value in the for loop)
+    - Global Work size: The number of work-items (per dimension)
+    - Work Dimension: The dimension of the index space. (number of for loops). (or number of elements in the tuple).
+3.11 NDRange: Note
+    Something is missing, but we haven't motivated what it is yet.
+    Mapping Execution Model to Device Model
+3.12 How do devices do work?
+    - PE runs instructions.
+        - So work-items should run on PEs
+    - Assign multiple work-items to each PE.
+        - Handle global work size > number PEs
+    - Good approach but something is missing.
+3.13 NDRange: Work-groups
+    - Partition the global work into smaller pieces.
+    - Each partition is called a work-group.
+    - Work-groups executes on the compute units.
+        - Compute unit local memory shared by the work-group
+            - All work-items in the work-group share local memory.
+        - Work-items in the work-group mapped to CU PEs.
+    - Work-group size has a physical meaning
+        - It is device specific.
+        - Sizing work-group impact performance heavily.
+    - Work-items can find out what work-group they are in.
+3.14 Memory: The Work-Item perspective:
+    - Private memory,
+    - Local memory,
+    - Constant memory,
+    - Global memory,
+3.15 Work-Group size:
+    - Maximum work-group size is a device characteristic.
+        - You can query a device to determine this value.
+    - Maximum work-group size is an integer.
+        - Handle n-dimensional work-groups in a special way.
+    - How to determine the best work-group size.
+        - Too advanced for now.
+3.16 NDRange: Work-groups
+    - Work-items can find out many things:
+        - work-group id.
+        - size of work-groups.
+        - global id.
+        - global work size.
+    - Work-groups are scheduled, not work items.
+3.17 n-Dimensional Work-Groups
+    - You can have multiple dimensions:
+        - Think of this geometrically.
+        - THink of this as pulling n-dimensional tuples from a set.
+    - The device maximum work-group size is scalar.
+        - but your work-groups can be n-dimensional sizes.
+        - e.g. Max work-group size is 32, but launching (8,3,1) dimensions.
+    - Work-Group Size = (W1, W2, ..., Wk). W1 * W2 * ... * Wk <= max work-group size.
+3.18 Geometric Visualization: 1D.
+    global work size: 10
+    work-group size: 3
+    Work groups are:
+    |w1 |w2 |w3 |w4 |w5 |
+    ---------------------
+    | | | | | | | | | | |
+    ---------------------
+    OpenCL partitions into work-groups for us.
+    Each Compute unit gets a work group.
+    Each Processing elements gets a work item from that work group.
+    If we only have one compute unit, it will just run all work groups on
+    that one compute unit.
+3.19 Geometric Visualization: 2D.
+    Watch in video: 50:00. Don't want to draw :P
+3.20 Final Kernel Call Points:
+    - Host will provide execution dimensions to the device.
+        - This creates an index space.
+    - Parameters can be values or global memory objects.
+    - Global memory is persistent between calls.
+        - Constant, Local, Private memory is just scratch space.
+        - They are going to be reset per kernel call.
+    - OpenCL implementaiton has considerable flexibility.
+        - How to map work-items to PEs.
+        - How to schedule work?
+
+4 Host API
+4.1 Platform
+    - Implementation of OpenCL.
+    - Like device drivers.
+        - Platforms expose devices to me.
+    - Example: A system with Two GPUs and a Xeon Phi.
+        - A platform form AMD for one GPU and the CPU.
+        - A platform from Intel for the Xeon Phi.
+        - A platform from nVidia for the other GPU.
+    - Use the platform to discover devices for me.
+
+4.2 Context
+    - Create a context for a particular platform.
+        - Cannot have multiple platforms in a context.
+    - Context is a container.
+        - Contains devices.
+        - Contains memory.
+    - Most operations are related to a context.
+        - Implicitly or explicitly.
+
+4.3 Programs
+    - Programs are just collections of kernels.
+        - You extract kernels from your program to call them.
+    - OpenCL applications have to load kernels.
+        - Compile OpenCL C source code.
+        - Load binary representation.
+    - Programs are device specific.
+
+4.4 Asynchronous Device Calls
+    - Host manages devices asynchronously.
+4.4.1 
+    - Host issues commands to the device.
+    - Commands tell the device to do something.
+    - Devices take commands and do as they say.
+    - Host waits for commands to complete.
+        - This means the device has to completed that action.
+    - Commands can be dependent on other commands.
+    - OpenCL commands are issued by clEnqueue* calls.
+        - A cl_event returned by clEnqueue* calls is used for dependencies.
+4.4.2 Overview. simplification
+    // Enqueues foo to run on a particular device.
+    // Returns a handle to represent the command.
+    // Commands take dependencies.
+    // Stuff that must happen before the other.
+    - cl_event e1 = clEnqueueFoo(..., {deps});
+4.4.3 Where do commands go?
+    - OpenCL has command-queues.
+    - A command-queue is attached to a single device.
+    - Can create as many command-queues as many you want.
+    - clEnqueue* commands have a command-queue parameter.
+4.4.4 Complete Picture.
+    - Host enqueues a command to command queue.
+    - Device pops command from command queue.
+    - Host can query for command completion.
+4.4.5 Host API Summary.
+    - Host API controls the device.
+        - Devices can't do anything themselves.
+    - Asynchronous execution model.
+        - Important for speed.
+        - A bit different from traditional asynchronous APIs
+
+Conclusion:
+    - Understand one part of OpenCL.
+        - Next part is to learn OpenCL c.
+    - Read the Specification myself.
