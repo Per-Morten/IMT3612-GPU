@@ -1,0 +1,232 @@
+Taken from:
+https://www.youtube.com/watch?v=1Yr-E9w4tGI&index=3&list=PLDivN33Lbf6cLqZ5_i_k0KeMaQKEctMgS
+Rewatch it, lots of graphics, hard to take notes! :/
+20:00-31:11 was about overloading the Compute Unit. Explains the Work Scheduler on the GPU.
+
+Typical examples are from AMD 7970 GPU. (Same is I have in large computer).
+However generally useful discussion.
+
+Motivation:
+GPUs for General Purpose Use?
+- GPUSs are for graphics processing.
+    - "Why should I care about them for my problem?"
+- AJ doesn't care about graphics.
+- General Purpose GPU (GPGPU) computing was unintentional.
+    - Certainly makes it interesting to deal with!
+- Marketing departments are misleading.
+    - Don't buy into the "marchitecture"
+- At the end of this talk, I will appreciate GPU architecture.
+
+OpenCL GPU Architecture.
+- Talking about the way OpenCL views GPU architecture.
+- Constant Memory is implemented in hardware.
+- Global Memory is implemented in hardware.
+
+GPU Compute Unit Model
+- Collection of Processing elements.
+- Local and private memory are implemented in hardware.
+- Local and private memory are shared with all processing elements.
+- Work Scheduler (will be talked about later).
+
+GPU Execution
+- The instruction pointer of all processing elements within a compute unit are locked together.
+- Sort of like SIMD instruction.
+
+AMD Wavefront (NVIDIA warp).
+- A wavefront is a collection of work-items, from the same work-group, executed together with a locked instruction pointer.
+- The smallest "unit" of the work group that is executing together.
+- Work-groups and wavefronts are not the same, but has some similar characteristics allow us to make analogies.
+    - work-groups are one or more wave-fronts.
+
+Interesting Problem:
+if (a < b)
+{
+    f = x;
+}
+else
+{
+    f = y;
+}
+- How we handle this when the same instructions must always happen on all the work items?
+
+Flow control:
+- No penalty if all PEs in the wavefront takes the same path through the branching statement.
+
+- If they must take different paths.
+- For all PEs where a < b: f = x;
+- The PE where the statement was false: (Pretends like f = x for now, and follow the instructions trough).
+    - Has a flag set that discards all writes. (i.e. It will execute the instructions, but there will be no side effects).
+- Then after that the execution will run the else path, and all PEs where a < b will not set their flags,
+    - while the PE where b >= a will run its correct else branch, and set f = y;
+
+Divergence:
+- That example was divergence.
+
+- How to Fix This?
+f = select(y, x, a < b);
+// Single processor instruction (likely).
+// Be careful!
+f = select(g(y), g(x), f(a) < f(b));
+// Not a good idea!
+// Might as well just have written an if statement.
+
+GPU Memory.
+- UNIX Programming. Check this book.
+- Question:
+    - How expensive is memory IO.
+    - Thought experiment.
+        - Each processing element executes one instruction per second.
+        - __global read. fetch 2 * 4 bytes.     // 57 seconds.
+        - Processing Element: int z = x + y;    // 1 second.
+        - __global write. write 4 bytes.        // 28 seconds.
+        - Total 86 seconds.
+    - Only one second of time were "useful".
+    - We do computation 1/86 of the time.
+    - 1.2% ALU efficiency.
+    - Version 2:
+        - Each processing element executes one instruction per second.
+        - __global read. fetch 2 * 8 bytes.     // 114 seconds.
+        - Processing Element: long z = x + y;   // 1 seconds.
+        - __global write. 8 bytes.              // 57 seconds.
+    - We do computation 1/172 of the time.
+    - 0.6% ALU efficiency.
+    
+- Memory I/O Time in Seconds.
+                                LIE! Won't get this performance.
+            32-bit value    64-bit value
+__private            0.3             0.6
+__local              0.5             1
+__global            28.6            57.2
+__constant           1               2
+
+* 1 operation per second.
+
+Trick: Increase ALU Use
+Memory I/O is constant, so increase ALU operations to pay for it.
+
+Example:
+__global read. fetch 4 bytes.          // 28 seconds.
+Processing Element: int z = factor(a); // 1 000 000 seconds.
+__global write. 4 bytes.               // 28 seconds.
+
+100% ALU efficiency!
+If problem is like that, I am lucky.
+
+4. Memory Latency Issues:
+4.1 Our problem:
+    - Memory transfer is very expensive.
+    - Our goal is 100% ALU utilization.
+        - i.e. each processing element is utilized 100% of the time.
+    - Recall: work-items run on a processing element.
+    - Recall: work-groups are scheduled on compute units.
+    - Can we use this?
+    - Yes.
+    - Insight: overload the compute unit with work-groups.
+
+4.2 Latency Hiding. (Read more on this. Was a bit unclear).
+    - Rewatch.
+    - The most interesting thing about GPU programming.
+    - Latency hiding works on wavefronts, not work-groups.
+
+4.3 Latency Hiding.
+    - Work pool has two subsets.
+        - Ready wavefronts.
+        - Blocked wavefronts.
+    - The size of the work pool is a fixed number. ready + blocked.
+    - It is perfectly fine for just 1 front to be ready to go. 
+        - Nothing special about having more than one front, you are not going to do any better.
+        - Memory Access can be free*!
+            - Some terms and conditions apply.
+            - If you write good code.
+
+4.4 Global Scheduler. (Talks about work-groups, not wavefronts)
+    - When a work-group terminates, another is loaded to take its place.
+
+4.5 Key to Latency Hiding.
+    - Make sure there is enough ALU work between memory accesses to hide latency.
+    - Try to interleave ALU with I/O.
+    - Or have A huge amount of ALU operations between the I/O operation.
+
+4.6 Calculating Occupancy.
+    - Can calculate occupancy by hand.
+    - Look up maximum number of wavefronts per CU from vendor documentation.
+    - Want to know how many wavefronts will actually run.
+    - Why calculate this?
+    - Will help you design faster kernels.
+    - Occupancy = Wavefronts / Slots
+4.7 What limits Occupancy:
+    - Private and local memory limits the number of wavefronts that can be run.
+4.8 Back to OpenCL
+    - Reason in terms of work-items.
+    - Set work-group size to be the wavefront size.
+        - on AMD HD7970 this is 64.
+    - So 64 work-items per work-group = 1 wavefront.
+    - Know the maximum number of "wavefront slots".
+        - on AMD HD7970 this is 40.
+    - Understand the following:
+        - More resources per work-item -> fewer wavefronts -> less latency hiding.
+        - fewer resources per work-item -> more wavefronts -> more latency hiding. 
+4.9 Private Memory Calculations.
+                   CU private memory size(bytes)
+------------------------------------------------------------ = max num wavefronts.
+(private memory per work-item) * (work-items per wavefront)
+
+Example 7970.
+256 KB * (1024 bytes / 1KB)
+-------------------------------------- = max num wavefronts.
+(private memory per work item) * 64
+
+I want to maximize wavefronts. How many 32-bit values can I store?
+// Put into private memory?
+102 bytes pr wave front. 102 / 4 = 25 (32-bit values). // Not mutch.
+
+Calculating Local memory is basically the same.
+
+5. Memory Channels.
+5.1 Global Memory: The Lie.
+    - One big pool.
+5.2 Global Memory: The Reality.
+    - Have a lot of memory channels, that can access different parts of the global memory.
+5.3 Global Memory Access.
+    - Global memory partitioned into subsets.
+    - Each subset is accessed through a channel.
+        - Must ALWAYS go through a channel.
+    - All global memory has an address.
+    - When you access memory the address maps to a channel.
+        - Need to know this for performance.
+5.4 Channel Conflicts.
+    - Memory requests can be serialized.
+        - If a single channel gets multiple requests they are handled serially.
+        - Problem, this does not allow for parallelization.
+    - Be careful of how you access memory.
+    - Pigeonhole principle.
+        - 32 compute units.
+        - 12 memory channels.
+    - Some memory channel will always get multiple memory requests.
+    - There is one efficient access pattern.    
+        - Adjacent work-items access adjacent memory (coalesced).
+5.5 Extreme Memory Architecture Details.
+    - Don't worry about the fine-grained details.
+        - You might care for extreme performance, but probably not.
+    - Instead rely upon informative benchmarks.
+        - Know what is generally fast or slow.
+        - Work-items loading adjacent values is very fast.
+        - Work-items loading random values is very slow.
+    - Want to use high-level facts to design algorithms.
+        - Always try to limit random memory access.
+        - However if I have to do a lot of random access.
+            - I will try to do as much ALU work as possible to allow for latency hiding.
+
+Lies of 64-bit.
+- Memory coalesced only work on 32 bit values.
+
+Conclusion:
+Where are we:
+    - Seen high-level openCL.
+    - Seen some OpenCL C.
+    - Seen GPU architecture.
+    - Have not discussed parallel programming.
+        - Naive view of OpenCL.
+    - Not discussed how to get good performance.
+    - Not seen any benchmarks.
+    - Not seen how to write good software with OpenCL. 
