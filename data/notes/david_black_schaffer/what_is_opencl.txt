@@ -1,0 +1,17 @@
+Taken from:
+https://www.youtube.com/watch?v=V4RfPfHQPC8&index=1&list=PLiwt1iVUib9s6vyEqdpcgAq7NBRlp9mAY
+
+OpenCL vs CUDA.
+- CUDA has better tools, language, and features.
+- OpenCL Supports more devices.
+- They're basically the same.
+    - If you can figure out how to make your algorithms run well on one it will work well on the other.
+    - Both strongly reflect GPU architectures of 2009.
+    - Slowly evolving to support more modern features. 
+    - Memory spaces and multiple kernels.
+
+Which one to choose.
+- Personal Project:         CUDA.
+- Performance at all costs: CUDA.
+- Professional product:     OpenCL.
+- This course:              OpenCL.
