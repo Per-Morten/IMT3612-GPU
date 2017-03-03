@@ -1,0 +1,33 @@
+OpenCL is good for:
+- Anything that is:
+    - Computationally intensive.
+    - Data parallel.
+    - Single-precision.
+- OpenCL was designed for what GPU's are good at, and this is what they are good at.
+- These change slowly. 
+    - We are starting to get more features, like more task parallel support.
+- Computational Intensity:
+    - Proportion of math ops : unique* memory ops. (*not already in cache)
+    - Memory is slow, math is fast.
+    - How many cycles does it take to access random memory?
+        - ~100 cycles.
+    - How many cycles does it take to do a floating point multiply?
+        - ~3 cycles.
+    - Loop body: Low Intensity:
+        A[i] = B[i] + C[i].             1 math, 3 mem.
+        A[i] = B[i] + C[i] * D[i]       2 math, 4 mem.
+        A[i]++                          1 math, 2 mem.
+    - Loop body: High(er)-intensity. (Will still use a LOT of time to wait for memory)
+        Temp+= A[i]*A[i]                2 math, 1 mem.
+        A[i] = exp(temp)*erf(temp)      x math, 1 mem.
+- Data-Parallelism
+    - Same independent operations on lots of data*. (*Performance may fall off a cliff if not exactly the same).
+    - Examples:
+        - Modify every pixel in an image with the same filter.
+        - Update every point in a grad using the same formula.
+- Single Precision.
+    - 32 bits should be enough for anything.
+    - Have double precision everywhere on the desktop, but not on mobile.
+    - Double precision is usually half as fast. 
+    - Double precision is slower because you need more data.
+
