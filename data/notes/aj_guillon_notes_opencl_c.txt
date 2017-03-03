@@ -1,0 +1,344 @@
+Taken from:
+https://www.youtube.com/watch?v=RKyhHonQMbw&index=2&list=PLDivN33Lbf6cLqZ5_i_k0KeMaQKEctMgS
+
+Introduction:
+OpenCL C != C.
+- No function pointers.
+- No recursion.
+- Function calls might be inlined.
+- OpenCL C is not a subset of C.
+    - OpenCL C has features not in C.
+- Specification outlines the full set of differences.
+
+What is OpenCL C.
+    - OpenCL device programming language.
+    - The main actor in OpenCL programming.
+    - OpenCL is like C99
+        - Same flavor of language.
+    - The other part of the OpenCL specification.
+
+1 Types
+1.1 OpenCL C vs C.
+    - OpenCL provides a concrete representation.
+        - Signed integers are two's complement.
+        - Types have fixed sizes.
+    - OpenCL C provides vector types operations.
+    - OpenCL C provides image types.
+        - Example of an opaque type.
+    - OpenCL C type are mostly C types.
+1.2 Integral Types:
+    - char  - 8-bit
+    - short - 16-bit
+    - int   - 32-bit
+    - long  - 64-bit
+    - Also have unsigned versions, with same size.
+1.3 Host and Device Types.
+    - Beware of difference between host types and device types.
+        - Don't assume they can be directly copied!
+        - They have different representations.
+1.4 Types Restricted to Device. 
+    - Can't be copied over to the device. (Can but, don't!)
+        - bool
+        - size_t
+        - ptrdiff_t
+        - intptr_t
+        - uintptr_t
+
+Memory regions
+1.5 OpenCL C Memory Pointers
+    // memory region.
+    // Think of the region as part of the type. Don't mix regions.
+    __global int* x;
+1.6 Assigning Pointers.
+    __global int* x;
+    __global int* y;
+    x = y; // Totally ok.
+1.7 Assigning Pointers.
+    __global int* x;
+    __private int* y;
+    x = y; // Error two different memory regions!
+1.8 Assigning Pointers.
+    __global int* x;
+    __private int* y;
+    *x = *y; // Totally fine to copy by value. 
+    // However, this actually does something physical. 
+    // Unsure if the compiler will be allowed to optimize that in many cases then.
+    // This can be costly!
+
+2 Vector operations
+2.1 Motivating OpenCL C Vectors.
+    - How to get good vectorized code?
+2.2 Vectorization Approaches:
+    - Use Libraries (Fair in certain cases)
+        - Just shifts the problem to somebody who isn't you.
+    - Let the compiler do it.
+        - Vectorizing compiler.
+    - C++ classes
+        - Not going to be terribly efficient.
+    - Intrinsics
+        - Messy.
+    - Assembly Language
+        - Ugh. (me, Yay?)
+2.3 OpenCL C Vector Types.
+    - (u)charN
+    - (u)shortN
+    - (u)intN
+    - (u)longN
+    - floatN
+    - doubleN
+    - where N = {2, 3, 4, 8, 16}
+2.4 Vector Operations: Scalar-Scalar
+    float x, y, z;
+    z = x + y; // Same as traditional C. Nothing new here.
+2.5 Vector Operations: Vector-Vector
+    float4 x, y, z;
+    z = x + y; // Component-wise operation.
+2.6 Vector Operations: Vector-Vector
+    z = x O y; // O is some operation.
+    (z1, z2,...,zk) = (x1 O y1, x2 O y2,...,xk O yk)
+    O = {+, -, *, /, >, >=, <, <=, ==, !=, &, |, ^, &&, ||, <<, >>}.
+    Relational operators are weird.
+    - Can't naturally map <= to a mathematical vector per say.
+    - Compare 2 vectors, the result is a vector with the boolean operation done component wise.
+2.7 Vector Operations: Scalar-Vector.
+    float x;
+    float4 y;
+    float? z;
+    z = x + y;  // What is z going to be?
+
+    // Turns into:
+    z = (float4)x + y;
+    // When mixing scalars and vectors, the scalar will be padded out.
+    // i.e. x == (x,x,x,x).
+    // This can quickly be "trap".
+2.8 Vector Operations: Summary.
+    - Scalar-scalar
+        - What we already know, standard C.
+    - Vector-vector
+        - Component-wise operations.
+    - Scalar-Vector
+        - Pad the scalar to be the same size.
+        - Reduced to vector-vector operations.
+2.9 Vector Addressing / Components.
+    - vec.<component>
+    - <component> = {s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, sA, sB, sC, sD, sE, sF}. // i.e. HEX
+    - Unpacking vectors might not be the best thing in terms of performance.
+        - Might stop certain optimizations(?)
+    - Valid addresses:
+        - v2  = s0, s1.
+        - v3  = s0, s1, s2.
+        - v4  = s0, s1, s2, s3.
+        - v8  = s0, s1, s2, s3, s4, s5, s6, s7.
+        - v16 = s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, sA, sB, sC, sD, sE, sF.
+2.10 Why use OpenCL C Vector Types?
+    // If using scalar, this is 4 steps.
+    float4 x, y;
+    float4 z = x + y;
+    // Using compiler turns into:
+    vector_add_4xf32 r3, r1, r2. //fictitious 4-width ISA vector instruction. 1 step.
+2.11 OpenCL C Vector Type Advantages.
+    - Clear communication of vector operations.
+        - I and the compiler both know these are vectors.
+    - Simplifies code
+        - Looks nicer.
+    - Excellent performance.
+        - Compiler can do a great job.
+
+3 Structures
+3.1 OpenCL C structures.
+    - OpenCL C has structures and unions.
+        - Just like C.
+    - There are good reasons to not use them (performance)!.
+    - Be careful of data exchange!
+        - Binary layout of struct must be same on device and host.
+        - Almost impossible to get right.
+            - Because of different padding for alignment.
+
+3 Functions
+3.1 OpenCL C functions.
+    - Ordinary C functions.
+        - Nothing special.
+    - Recursion is forbidden.
+    - Functions might be expanded and inlined.
+3.2 Example
+    float4 add(float4 x, float4 y)
+    {
+        return x + y;
+    }
+3.3 Example
+    // Ok, however: Implicit that we are talking about private memory region.
+    // The signature is by default: add(__private float4* x, __private float4* y)
+    // Will need another function for doing globals, for example gg_add(__global float4* x, __global float4* y)
+    float4 add(float4* x, float4* y)
+    {
+        return *x + *y;
+    }
+
+4 Kernels
+4.1 Introducing Kernels
+    - Kernels are entry points to device execution.
+        - like int main(int argc, char** argv);
+    - Kernels are called by the host.
+        - Host will setup parameters fro the call.
+        - Host will supply execution parameters for the call.
+        - Device runs function.
+    - Kernel arguments are pointers to __global or just values.
+        - Every invocation will have the same values specified!
+4.2 Example:
+    // __kernel void always required. Can't return anything.
+    __kernel void add(__global float* x,
+                      __global float* y,
+                      __global float* z,
+                      uint32_t len)
+    {
+                    // Global id, completely unique.
+                    // 0 is indicator of dimension.
+        size_t idx = get_global_id(0);
+        if (idx >= len) // need to do this to avoid overflowing and going out of bounds.
+        {
+            return;
+        }
+
+        z[idx] = x[idx] + y[idx];
+    }
+4.3 Review: Execution Model.    
+    - Execution has dimensions
+    - Global work size
+    - Global offset
+    - Work-group size.
+    - All of these can be querried, as it is the only way to identify what "invocation" of the kernel "this" is.
+4.4 Relevant functions:
+    - get_global_id(n) // The one that is used the most.
+        - Global work-item id in dimension n.
+    - get_global_offset(n)
+        - Global offset in dimension n.
+    - get_local_id(n)
+        - Local work-item id in dimension n.
+    - Go see what the rest of the functions are. 
+4.5 Kernel Example:
+    __kernel void add(__global float* x,
+                      __global float* y,
+                      __global float* z,
+                      uint32_t len) // uses typedef to make life easier.
+    {
+        // size_t device specific, does not matter as it is not an the input parameter.
+        size_t idx = get_global_id(0);
+        if (idx >= len)
+        {
+            return;
+        }
+
+        z[idx] = x[idx] + y[idx];
+    }
+
+5 Memory
+5.1 Local Memory
+    - Memory is shared by work-items within the work-group.
+        - Might be implemented in hardware.
+    - Often key to top-performance.
+5.2 Local Memory
+    __kernel void foo(__global float* in,
+                      __global float* out,
+                      __local  float* scratch, // Parameter that is to local memory. 
+                      uint32_t len)            // This is "exception" to the rule of only pointers
+                                               // to global memory, or value.             
+                                               // However We are not providing the pointer on the host side,
+                                               // We are providing an argument stating how big that memory should be.
+                                               // So technically not an exception :P
+    {
+        size_t global_idx = get_global_id(0);  
+        size_t local_idx = get_local_id(0);    
+
+        if (global_idx >= len)
+        {
+            return;
+        }
+
+        // scratch space goes from 0 to k. Where k is work group size.
+        scratch[local_idx] = in[global_idx]; // Loading into scratch space.
+
+        // Do some local operation.
+
+        out[global_idx] = scratch[local_idx]; // Writing it back out.
+    }
+5.3 Local Memory: Alternate, can be easier to conceptualize, and to work with.
+    
+    #define SCRATCH_SIZE 1024
+
+    __kernel void foo(__global float* in,
+                      __global float* out,
+                      uint32_t len)
+    {
+        // SHARED BETWEEN WORK-ITEMS in work group.
+        __local float scratch[SCRATCH_SIZE];
+
+        size_t global_idx = get_global_id(0);
+        size_t local_id = get_local_id(0);
+
+        if (global_idx >= len)
+        {
+            return;
+        }
+
+        scratch[local_idx] = in[global_idx];
+
+        // do some local operation.
+
+        out[global_idx] = scratch[local_idx];
+    }
+5.4 Constant Memory
+    - Read-only memory shared by all work-items.
+        - Very fast to read.
+        - But relatively small amount of space.
+    - Useful in some circumstances.
+        - e.g. lookup tables.
+    - Populating Constant memory.
+        - Put it directly in the file.
+        - Have it as an argument (look that up).
+5.5 Kernel Limitations.
+    - Kernels might execute concurrently on the device
+        - But there is no mechanism for them to cooperate.
+            - Trying to get them to cooperate is undefined behavior.
+    - A single kernel is limited in what it can do.
+        - I might need to launch several kernels to get a job done.
+    - Kernels cannot allocate memory. (Not dynamically at least).
+        - Everything is fixed prior to kernel execution.
+5.6 Kernel Attributes.
+    - vec_type_hint
+        - Hint to the compiler for vectorization.
+    - reqd_work_group_size
+        - Forces a work-group size (useful for performance).
+            - Use it if you want speed. (based on what you know of the data obviously).
+        - 64, might be a good number. 
+
+6 Quick Topics.
+6.1 OpenCL Image Support.
+    - OpenCL Supports image operations.
+        - Load an image, do something, write an image.
+    - AJ does not like images in OpenCL.
+        - They represent a deeper issue for him.
+        - See video summary notes to read about his issue with images.
+    - Read about images in the specification if want.
+6.2 Built-in OpenCL C Functions.
+    - Work-item functions.  
+        - Figure out the kernel launch parameters.
+    - Math functions.
+    - Integer functions.
+    - Geometric functions.
+    - See documentation for details.
+6.3 Synchronization
+    - Complex topic.
+    - Watch for another video.
+    - OpenCL C provides atomic operations.
+    - OpenCL C parallelism is a bit tricky.
+        - Lockless is the paradigm(?)
+6.4 Extensions.
+    - OpenCL C standard has extensions.
+    - Extra features can be enabled with #pragma.
+    - As always, be careful.
+
+Conclusion:
+- Now understand OpenCL (apperantly)
+- Now understnad basics of OpenCL.
+- Go and read the specification.
+- Will take some time for everything to sink in.
