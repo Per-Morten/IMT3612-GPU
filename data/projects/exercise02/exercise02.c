@@ -90,7 +90,7 @@ main(int argc, char** argv)
     }
 
     // Building program    
-    result = pms_build_program(program, device_id);
+    result = pms_build_program(program, device_id, NULL);
     if (result != PMS_SUCCESS)
     {
         return EXIT_FAILURE;

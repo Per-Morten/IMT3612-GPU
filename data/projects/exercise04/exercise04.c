@@ -44,7 +44,7 @@ setup_kernel(cl_context context,
         PMS_ERROR("Could not create program");
     }
 
-    result = pms_build_program(*out_program, device_id);
+    result = pms_build_program(*out_program, device_id, NULL);
     if (result != PMS_SUCCESS)
     {
         PMS_ERROR("Could not build program");
