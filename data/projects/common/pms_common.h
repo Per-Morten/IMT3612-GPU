@@ -181,3 +181,29 @@ int32_t
 pms_get_device_id(cl_device_type device_type,
                   cl_device_id* out_device_id,
                   size_t* out_device_count);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Queries for OpenCL CPU device, sets up context and command queue.
+///
+/// \param out_device_id pointer to a place to store the cl_device_id.
+/// \param out_context pointer to a place to store the cl_context.
+/// \param out_command_queue pointer to a place to store the cl_command_queue.
+///
+/// \return PMS_SUCCESS on success, PMS_FAILURE on failure.
+///////////////////////////////////////////////////////////////////////////////
+int32_t
+pms_setup_opencl_cpu(cl_device_id* out_device_id,
+                     cl_context* out_context,
+                     cl_command_queue* out_command_queue);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Releases the resources handed in through the parameters.
+///
+/// \param context pointer to the context to release, can be NULL.
+/// \param command_queue pointer to the command_queue to release, can be NULL.
+///
+/// \return PMS_SUCCESS on success, PMS_FAILURE on failure.
+///////////////////////////////////////////////////////////////////////////////
+int32_t
+pms_cleanup_opencl(cl_context* context,
+                   cl_command_queue* command_queue);
