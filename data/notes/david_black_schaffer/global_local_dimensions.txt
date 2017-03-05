@@ -1,0 +1,21 @@
+Taken from:
+https://www.youtube.com/watch?v=zicV5AitqA0&index=3&list=PLiwt1iVUib9s6vyEqdpcgAq7NBRlp9mAY
+
+How to speficy parallelism.
+- Parallelism is defined by 1D, 2D, or 3D, global dimensions for each kernel execution.
+- A work-item (thread) is executed for every point in the global dimensions.
+
+Examples:   
+1k audio:           1024            1024 work-items.
+HD video:           1920x1080         2M work-items.
+3D MRI:             256x256x256      16M work-items.
+HD per line:        1080            1080 work-items.
+HD per 8x8 block:   240x135          32k work-items.
+
+Local Dimensions:
+- Global dimensions are broken down evenly into local work-groups.
+    - Global Dimensions: 100x512.
+    - Local Dimensions: 10x8, 100x1, 50x2, 2x128.
+    - Invalid Local Dimensions: 10x10, 16x16.
+- Each work-group is logically executed together on one compute unit.
+- Synchronization is only allowed between work-items in the same work-group
