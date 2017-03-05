@@ -6,4 +6,5 @@ subdirs(
     exercise02
     exercise04
     exercise05
+    compiler
 )
