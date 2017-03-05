@@ -65,6 +65,7 @@ run_strlen_test(cl_device_id device_id,
     char string[] = "Test";
 
     // Creating buffers.
+    PMS_INFO("Creating buffers");
     cl_int error = 0;
     cl_mem d_str = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                   (sizeof(char) * strlen(string) + 1), string, &error);
@@ -75,11 +76,13 @@ run_strlen_test(cl_device_id device_id,
     PMS_CHECK_CL_ERROR(error,"creating len buffer");
 
     // Setting up 
+    PMS_INFO("Setting up arguments");
     error  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_str);
     error |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_result);
     PMS_CHECK_CL_ERROR(error, "setting arguments");
 
     // Enqueueing.
+    PMS_INFO("Enqueueing");
     const size_t work_size = 1;
     error = clEnqueueNDRangeKernel(command_queue, 
                                    kernel,
@@ -88,9 +91,11 @@ run_strlen_test(cl_device_id device_id,
                                    NULL, 0, NULL, NULL);
     PMS_CHECK_CL_ERROR(error, "enqueueing kernel");
 
+    PMS_INFO("Finishing");
     error = clFinish(command_queue);
     PMS_CHECK_CL_ERROR(error, "waiting to finish");
 
+    PMS_INFO("Reading");
     uint32_t h_result = 0;
     error = clEnqueueReadBuffer(command_queue, d_result, CL_TRUE, 0,
                                 sizeof(uint32_t), &h_result, 0, NULL, NULL);
