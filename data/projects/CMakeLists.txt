@@ -7,4 +7,5 @@ subdirs(
     exercise04
     exercise05
     compiler
+    string_tests
 )
