@@ -158,12 +158,14 @@ pms_create_program(cl_context context,
 ///
 /// \param program The program to build.
 /// \param device_id The id of the device to build the program on.
+/// \param arguments Build arguments for the program.
 ///
 /// \return PMS_SUCCESS on success, PMS_FAILURE on failure, or termination.
 ///////////////////////////////////////////////////////////////////////////////
 int32_t
 pms_build_program(cl_program program, 
-                  cl_device_id device_id);
+                  cl_device_id device_id,
+                  const char* arguments);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Gets the ID of the device that can be used to run OpenCL on.
