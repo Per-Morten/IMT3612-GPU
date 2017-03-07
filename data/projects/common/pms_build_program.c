@@ -2,9 +2,10 @@
 
 int32_t
 pms_build_program(cl_program program, 
-                  cl_device_id device_id)
+                  cl_device_id device_id,
+                  const char* arguments)
 {
-    cl_int error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    cl_int error = clBuildProgram(program, 0, NULL, arguments, NULL, NULL);
     if (error != CL_SUCCESS)
     {
         size_t length = 0;

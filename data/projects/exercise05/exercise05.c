@@ -10,7 +10,7 @@ setup_opencl(cl_device_id* out_device_id,
              cl_context* out_context,
              cl_command_queue* out_command_queue)
 {
-    pms_get_device_id(CL_DEVICE_TYPE_ALL,
+    pms_get_device_id(CL_DEVICE_TYPE_CPU,
                       out_device_id,
                       out_device_count);
 
@@ -45,7 +45,7 @@ setup_kernel(cl_context context,
         PMS_ERROR("Could not create program");
     }
 
-    result = pms_build_program(*out_program, device_id);
+    result = pms_build_program(*out_program, device_id, NULL);
     if (result != PMS_SUCCESS)
     {
         PMS_ERROR("Could not build program");
@@ -209,6 +209,7 @@ main(int argc, char** argv)
     cl_command_queue command_queue;
     setup_opencl(&device_id, &device_count, &context, &command_queue);
     PMS_INFO("Device count: %zu", device_count);
+    pms_output_device_info(device_id);
 
     PMS_INFO("Setting up kernel");
     cl_program kernel_program;
