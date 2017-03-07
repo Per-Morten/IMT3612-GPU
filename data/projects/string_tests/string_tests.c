@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdint.h>
+#include <ctype.h>
 #include <CL/cl.h>
 #include <pms_common.h>
 
@@ -226,7 +227,64 @@ run_toupper_test(cl_device_id device_id,
                  cl_command_queue command_queue,
                  cl_program program)
 {
-    return PMS_FAILURE;
+    cl_int error = 0;
+    cl_kernel kernel = clCreateKernel(program, 
+                                      "toupper_test", 
+                                      &error);
+    PMS_CHECK_CL_ERROR(error, "create kernel");
+
+    #define RUN_TOUPPER_TEST_STRLEN 100
+
+    char h_src[RUN_TOUPPER_TEST_STRLEN] = "Testing toUpper";
+    
+    PMS_INFO("Creating Buffers");
+    cl_mem d_src = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+                                  RUN_TOUPPER_TEST_STRLEN, h_src, &error);
+    PMS_CHECK_CL_ERROR(error, "creating d_src buffer");
+
+    cl_mem d_dest = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
+                                   RUN_TOUPPER_TEST_STRLEN, NULL, &error);
+    PMS_CHECK_CL_ERROR(error, "creating d_dest buffer");
+
+    // Setting up
+    error  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_src);
+    error |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_dest);
+    PMS_CHECK_CL_ERROR(error, "setting up arguments");
+
+    // Enqueueing
+    PMS_INFO("Enqueueing");
+    const size_t work_size = 1;
+    error = clEnqueueNDRangeKernel(command_queue, kernel, 1, 
+                                   NULL, &work_size, NULL, 
+                                   0, NULL, NULL);
+    PMS_CHECK_CL_ERROR(error, "enqueueing kernel");
+
+    PMS_INFO("Finishing");
+    error = clFinish(command_queue);
+    PMS_CHECK_CL_ERROR(error, "waiting to finish");
+
+    PMS_INFO("Reading");
+    char h_dest[RUN_STRCPY_TEST_STRLEN];
+    error = clEnqueueReadBuffer(command_queue, d_dest, CL_TRUE, 0, 
+                                RUN_TOUPPER_TEST_STRLEN, h_dest, 0, NULL, NULL);
+    PMS_CHECK_CL_ERROR(error, "reading result");
+
+    clReleaseMemObject(d_src);
+    clReleaseMemObject(d_dest);
+    clReleaseKernel(kernel);
+
+    PMS_INFO("Size: %zu", strlen(h_src));
+    PMS_INFO("Device: %s", h_dest);
+    for (size_t i = 0; i < strlen(h_src); ++i)
+    {
+        if (h_dest[i] != toupper(h_src[i]))
+        {
+            PMS_INFO("%c vs %c", h_dest[i], toupper(h_src[i]));
+            return PMS_FAILURE;
+        }
+    }
+
+    return PMS_SUCCESS;
 }
 
 int32_t

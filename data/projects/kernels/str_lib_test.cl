@@ -36,3 +36,18 @@ __kernel void strcpy_test(__global const char* src,
         pms_strcpy_gg(dest, src);
     }
 }
+
+__kernel void toupper_test(__global const char* src,
+                           __global char* dest)
+{
+    int32_t global_id = get_global_id(0);
+
+    if (global_id == 0)
+    {
+        int32_t len = pms_strlen_g(src);
+        for (int32_t i = 0; i < len; i++)
+        {
+            dest[i] = pms_toupper(src[i]);
+        }
+    }
+}
