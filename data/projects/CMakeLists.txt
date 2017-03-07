@@ -8,4 +8,5 @@ subdirs(
     exercise05
     compiler
     lib_tests
+    puzzle_lib
 )
