@@ -3,4 +3,5 @@ project (gpu_programming)
 
 subdirs(
     kernel_tests
+    puzzle_lib_tests
 )
