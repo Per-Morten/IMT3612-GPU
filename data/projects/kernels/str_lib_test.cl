@@ -25,3 +25,14 @@ __kernel void strcmp_test(__global const char* lhs,
         result[global_id] = pms_strcmp_gg(lhs, rhs);
     }
 }
+
+__kernel void strcpy_test(__global const char* src,
+                          __global char* dest)
+{
+    int32_t global_id = get_global_id(0);
+
+    if (global_id == 0)
+    {
+        pms_strcpy_gg(dest, src);
+    }
+}

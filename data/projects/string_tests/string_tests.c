@@ -149,6 +149,7 @@ run_strcmp_test(cl_device_id device_id,
     clReleaseMemObject(d_lhs_str);
     clReleaseMemObject(d_rhs_str);
     clReleaseMemObject(d_result);
+    clReleaseKernel(kernel);
 
     if (strcmp(h_lhs, h_rhs) != h_result)
     {
@@ -164,7 +165,59 @@ run_strcpy_test(cl_device_id device_id,
                 cl_command_queue command_queue,
                 cl_program program)
 {
-    return PMS_FAILURE;
+    cl_int error = 0;
+    cl_kernel kernel = clCreateKernel(program,
+                                      "strcpy_test",
+                                      &error);
+    PMS_CHECK_CL_ERROR(error, "create kernel");
+
+    #define RUN_STRCPY_TEST_STRLEN 100
+
+    char h_src[RUN_STRCPY_TEST_STRLEN] = "Testing strcpy";
+
+    PMS_INFO("Creating Buffers");
+    cl_mem d_src = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+                                  RUN_STRCPY_TEST_STRLEN, h_src, &error);
+    PMS_CHECK_CL_ERROR(error, "creating h_src buffer");
+
+    cl_mem d_dest = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                                   RUN_STRCPY_TEST_STRLEN, NULL, &error);
+    PMS_CHECK_CL_ERROR(error, "creating h_dest buffer");
+
+    // Setting up
+    PMS_INFO("Setting up arguments");
+    error  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_src);
+    error |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_dest);
+    PMS_CHECK_CL_ERROR(error, "setting up arguments");
+
+    // Enqueueing
+    PMS_INFO("Enqueueing");
+    const size_t work_size = 1;
+    error = clEnqueueNDRangeKernel(command_queue, kernel, 1, 
+                                   NULL, &work_size, NULL, 
+                                   0, NULL, NULL);
+    PMS_CHECK_CL_ERROR(error, "enqueueing kernel");
+
+    PMS_INFO("Finishing");
+    error = clFinish(command_queue);
+    PMS_CHECK_CL_ERROR(error, "waiting to finish");
+
+    PMS_INFO("Reading");
+    char h_dest[RUN_STRCPY_TEST_STRLEN];
+    error = clEnqueueReadBuffer(command_queue, d_dest, CL_TRUE, 0, 
+                                RUN_STRCPY_TEST_STRLEN, h_dest, 0, NULL, NULL);
+    PMS_CHECK_CL_ERROR(error, "reading result");
+
+    clReleaseMemObject(d_dest);
+    clReleaseMemObject(d_src);
+    clReleaseKernel(kernel);
+
+    if (strcmp(h_src, h_dest) != 0)
+    {
+        return PMS_FAILURE;
+    }
+
+    return PMS_SUCCESS;
 }
 
 int32_t
