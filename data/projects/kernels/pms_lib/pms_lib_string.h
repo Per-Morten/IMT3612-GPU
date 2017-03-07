@@ -4,4 +4,5 @@
 #include <pms_lib_strcmp.h>
 #include <pms_lib_strcpy.h>
 #include <pms_lib_toupper.h>
+#include <pms_lib_tolower.h>
 #endif
