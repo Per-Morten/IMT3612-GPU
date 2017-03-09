@@ -161,6 +161,77 @@ run_strcmp_test(cl_device_id device_id,
 }
 
 int32_t
+run_strncmp_test(cl_device_id device_id,
+                 cl_context context,
+                 cl_command_queue command_queue,
+                 cl_program program)
+{
+    cl_int error = 0;
+    cl_kernel kernel = clCreateKernel(program, 
+                                      "strncmp_test", 
+                                      &error);
+    PMS_CHECK_CL_ERROR(error, "create kernel");
+
+    char h_lhs[] = "Testing string_cmp";
+    char h_rhs[] = "Testing strcmp";
+
+    // Creating buffers
+    PMS_INFO("Creating Buffers");
+    cl_mem d_lhs_str = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                      sizeof(char) * strlen(h_lhs) + 1, h_lhs, &error);
+    PMS_CHECK_CL_ERROR(error, "creating h_lhs buffer");
+    
+    cl_mem d_rhs_str = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                      sizeof(char) * strlen(h_rhs) + 1, h_rhs, &error);
+    PMS_CHECK_CL_ERROR(error, "creating h_rhs buffer");
+    
+    cl_mem d_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                                     sizeof(int32_t), NULL, &error);
+    PMS_CHECK_CL_ERROR(error, "creating d_result buffer");
+
+    // Setting up
+    PMS_INFO("Setting up arguments");
+    const uint32_t compare_count = 10;
+    error  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_lhs_str);
+    error |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_rhs_str);
+    error |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_result);
+    error |= clSetKernelArg(kernel, 3, sizeof(uint32_t), &compare_count);
+    PMS_CHECK_CL_ERROR(error, "setting up arguments");
+
+    // Enqueueing.
+    PMS_INFO("Enqueueing");
+    const size_t work_size = 1;
+    error = clEnqueueNDRangeKernel(command_queue, kernel, 1, 
+                                   NULL, &work_size, NULL, 
+                                   0, NULL, NULL);
+    PMS_CHECK_CL_ERROR(error, "enqueueing kernel");
+    PMS_INFO("Finishing");
+    error = clFinish(command_queue);
+    PMS_CHECK_CL_ERROR(error, "waiting to finish");
+
+    PMS_INFO("Reading");
+    int32_t h_result = 0;
+    error = clEnqueueReadBuffer(command_queue, d_result, CL_TRUE, 0,
+                                sizeof(int32_t), &h_result, 0, NULL, NULL);
+    PMS_CHECK_CL_ERROR(error, "reading result");
+
+    // Cleanup
+    clReleaseMemObject(d_lhs_str);
+    clReleaseMemObject(d_rhs_str);
+    clReleaseMemObject(d_result);
+    clReleaseKernel(kernel);
+
+    int32_t compare_result = strncmp(h_lhs, h_rhs, compare_count);
+    if (compare_result != h_result)
+    {
+        PMS_WARN("strncmp returned: %d, pms_strncmp returned: %d", compare_result, d_result);
+        return PMS_FAILURE;
+    }
+
+    return PMS_SUCCESS;
+}
+
+int32_t
 run_strcpy_test(cl_device_id device_id,
                 cl_context context,
                 cl_command_queue command_queue,
@@ -367,7 +438,7 @@ main(int argc, char** argv)
                   "kernels/str_lib_test.cl",
                   "-Ikernels/pms_lib/ -Werror");
 
-    const size_t number_of_tests = 5;
+    const size_t number_of_tests = 6;
     size_t success_count = number_of_tests;
     PMS_INFO("Running strlen test");
     if (run_strlen_test(device_id, context, command_queue, program) == PMS_FAILURE)
@@ -379,6 +450,11 @@ main(int argc, char** argv)
     {
         --success_count;
         PMS_WARN("Failed strcmp test!");
+    }
+    if (run_strncmp_test(device_id, context, command_queue, program) == PMS_FAILURE)
+    {
+        --success_count;
+        PMS_WARN("Failed strncmp test!");
     }
     if (run_strcpy_test(device_id, context, command_queue, program) == PMS_FAILURE)
     {
