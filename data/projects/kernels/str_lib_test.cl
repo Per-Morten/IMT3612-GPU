@@ -69,6 +69,23 @@ __kernel void strcat_test(__global const char* src_1,
     }
 }
 
+__kernel void strncat_test(__global const char* src_1,
+                           __global const char* src_2,
+                           __global char* dest,
+                           uint32_t max_cat)
+{
+    size_t global_id = get_global_id(0);
+
+    if (global_id == 0)
+    {
+        __private char str[PMS_MAX_STRLEN];
+        pms_strcpy_pg(str, src_1);
+        pms_strncat_pg(str, src_2, max_cat);
+
+        pms_strcpy_gp(dest, str);
+    }
+}
+
 __kernel void strchr_test(__global const char* src,
                           __global int32_t* dist,
                           char target)
