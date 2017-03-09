@@ -11,8 +11,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 #define PMS_LIB_STRCPY_GENERATOR(memory_region_a, memory_region_b, postfix)     \
 size_t                                                                          \
-pms_strcpy_##postfix(memory_region_a     char* dest,                            \
-                     memory_region_b     const char* src)                       \
+pms_strcpy_##postfix(memory_region_a char* dest,                                \
+                     memory_region_b const char* src)                           \
 {                                                                               \
     size_t count = 0;                                                           \
     while ((*dest++ = *src++) != '\0')                                          \
