@@ -1,9 +1,11 @@
 #ifndef PMS_LIB_STRCHR
 #define PMS_LIB_STRCHR
+#include <pms_lib_types.h>
 
 #define PMS_LIB_STRCHR_GENERATOR(memory_region, postfix)     \
 memory_region const char*                                    \
-pms_strchr_##postfix(memory_region const char* str, char ch) \
+pms_strchr_##postfix(memory_region const char* str,          \
+                     char ch)                                \
 {                                                            \
     memory_region const char* ret = NULL;                    \
     while ((!(ret = (*str == ch) ? str : NULL)) && (*str++)) \
