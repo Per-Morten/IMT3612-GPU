@@ -6,4 +6,5 @@
 #include <pms_lib_strncmp.h>
 #include <pms_lib_tolower.h>
 #include <pms_lib_toupper.h>
+#include <pms_lib_strchr.h>
 #endif
