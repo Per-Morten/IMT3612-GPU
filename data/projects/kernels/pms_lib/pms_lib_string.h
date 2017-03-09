@@ -8,4 +8,5 @@
 #include <pms_lib_toupper.h>
 #include <pms_lib_strchr.h>
 #include <pms_lib_strcat.h>
+#include <pms_lib_strncat.h>
 #endif
