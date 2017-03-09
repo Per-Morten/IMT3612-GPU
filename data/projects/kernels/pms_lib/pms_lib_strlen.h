@@ -2,9 +2,9 @@
 #define PMS_LIB_STRLEN
 #include <pms_lib_types.h>
 
-#define PMS_LIB_STRLEN_GENERATOR(memory_region_a, postfix)                      \
+#define PMS_LIB_STRLEN_GENERATOR(memory_region, postfix)                        \
 size_t                                                                          \
-pms_strlen_##postfix(memory_region_a const char* str)                           \
+pms_strlen_##postfix(memory_region const char* str)                             \
 {                                                                               \
     size_t len = 0;                                                             \
     while ((*str++))                                                            \
