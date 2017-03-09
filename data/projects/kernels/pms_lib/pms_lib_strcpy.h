@@ -15,10 +15,9 @@ pms_strcpy_##postfix(memory_region_a     char* dest,                            
                      memory_region_b     const char* src)                       \
 {                                                                               \
     size_t count = 0;                                                           \
-    while ((*src))                                                              \
+    while ((*dest++ = *src++) != '\0')                                          \
     {                                                                           \
         ++count;                                                                \
-        *dest++ = *src++;                                                       \
     }                                                                           \
     *dest = '\0';                                                               \
     return count;                                                               \
