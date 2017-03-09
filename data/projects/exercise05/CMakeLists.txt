@@ -1,21 +1,10 @@
-cmake_minimum_required (VERSION 2.6)
-project (exercise05)
+cmake_minimum_required(VERSION 2.6)
+project(exercise05)
 
-# The version number.
-set (exercise05_VERSION_MAJOR 1)
-set (exercise05_VERSION_MINOR 0)
-
-# add the binary tree to the search path for include files
-# so that we will find TutorialConfig.h
-include_directories("${PROJECT_BINARY_DIR}"
-                    "/opt/intel/opencl-1.2-sdk-6.3.0.1904/include/"
-                    "../common/")
-
-set(GCC_FLAGS "-Wall -O3 -std=c11 -fopenmp")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_FLAGS}")
-
+set(exercise05_VERSION_MAJOR 1)
+set(exercise05_VERSION_MINOR 0)
 
 add_executable(exercise05 
     exercise05.c
 )
-target_link_libraries(exercise05 OpenCL pms_common)
+target_link_libraries(exercise05 OpenCL pms_common m)
