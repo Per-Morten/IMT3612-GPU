@@ -9,184 +9,34 @@
 /// \return The number of characters copied. 
 ///         I.e. new strlen.
 ///////////////////////////////////////////////////////////////////////////////
+#define PMS_LIB_STRCPY_GENERATOR(memory_region_a, memory_region_b, postfix)     \
+size_t                                                                          \
+pms_strcpy_##postfix(memory_region_a     char* dest,                            \
+                     memory_region_b     const char* src)                       \
+{                                                                               \
+    size_t count = 0;                                                           \
+    while ((*src))                                                              \
+    {                                                                           \
+        ++count;                                                                \
+        *dest++ = *src++;                                                       \
+    }                                                                           \
+    *dest = '\0';                                                               \
+    return count;                                                               \
+}                                                                               \
 
-///////////////////////////////////////////////////////////////////////////////
-/// Global
-///////////////////////////////////////////////////////////////////////////////
-int32_t
-pms_strcpy_gg(__global      char* dest,
-              __global      const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
+PMS_LIB_STRCPY_GENERATOR(__global, __global,   gg);
+PMS_LIB_STRCPY_GENERATOR(__global, __constant, gc);
+PMS_LIB_STRCPY_GENERATOR(__global, __local,    gl);
+PMS_LIB_STRCPY_GENERATOR(__global, __private,  gp);
 
-int32_t
-pms_strcpy_gc(__global      char* dest,
-              __constant    const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
+PMS_LIB_STRCPY_GENERATOR(__local, __global,   lg);
+PMS_LIB_STRCPY_GENERATOR(__local, __constant, lc);
+PMS_LIB_STRCPY_GENERATOR(__local, __local,    ll);
+PMS_LIB_STRCPY_GENERATOR(__local, __private,  lp);
 
-int32_t
-pms_strcpy_gl(__global      char* dest,
-              __local       const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-int32_t
-pms_strcpy_gp(__global      char* dest,
-              __private     const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// Local
-///////////////////////////////////////////////////////////////////////////////
-int32_t
-pms_strcpy_ll(__local       char* dest,
-              __local       const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-int32_t
-pms_strcpy_lg(__local       char* dest,
-              __global      const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-int32_t
-pms_strcpy_lc(__local       char* dest,
-              __constant    const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-
-int32_t
-pms_strcpy_lp(__local       char* dest,
-              __private     const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// Private
-///////////////////////////////////////////////////////////////////////////////
-int32_t
-pms_strcpy_pl(__private     char* dest,
-              __local       const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-int32_t
-pms_strcpy_pg(__private     char* dest,
-              __global      const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-int32_t
-pms_strcpy_pc(__private     char* dest,
-              __constant    const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
-
-
-int32_t
-pms_strcpy_pp(__private     char* dest,
-              __private     const char* src)
-{
-    int32_t count = 0;
-    while ((*src))
-    {
-        ++count;
-        *dest++ = *src++;
-    }
-    *dest = '\0';
-    return count;
-}
+PMS_LIB_STRCPY_GENERATOR(__private, __global,   pg);
+PMS_LIB_STRCPY_GENERATOR(__private, __constant, pc);
+PMS_LIB_STRCPY_GENERATOR(__private, __local,    pl);
+PMS_LIB_STRCPY_GENERATOR(__private, __private,  pp);
 
 #endif
