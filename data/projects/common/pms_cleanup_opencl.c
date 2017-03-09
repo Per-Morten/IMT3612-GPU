@@ -13,4 +13,5 @@ pms_cleanup_opencl(cl_context* context,
     {
         clReleaseContext((*context));
     }
+    return PMS_SUCCESS;
 }

@@ -1,0 +1,69 @@
+inital_value: 1234 5678
+target_value: 6781 2345
+max_depth: 10
+sequence: 0 3 0 3 
+
+inital_value: 01234 56789
+target_value: 54137 268
+max_depth: 10
+sequence: Failed
+
+inital_value: Simon McCallum
+target_value: lumo nCaSimLMc
+max_depth: 10
+sequence: Failed
+
+inital_value: Simon McCallum
+target_value: monCa imlSMclu
+max_depth: 10
+sequence: 2 0 3 2 2 2 0 2 2 0 
+
+inital_value: Multithreaded
+target_value: tithreaeadedMultiMuld edhr
+max_depth: 10
+sequence: 3 2 0 1 3 0 3 2 
+
+inital_value: Game Programming
+target_value: Prmminograg Game
+max_depth: 7
+sequence: 3 0 0 0 1 2 0 
+
+inital_value: Programming Patterns
+target_value: nsrammiProgngPatter 
+max_depth: 10
+sequence: 0 1 3 0 2 0 3 1 
+
+inital_value: CppCon 2016
+target_value: Cp0 16nopC
+max_depth: 10
+sequence: 2 0 2 0 3 2 3 2 
+
+inital_value: FTCP Engine Is Best Engine
+target_value:  EngineFTCP ngine Es BestI
+max_depth: 5
+sequence: 1 2 2 0 0 
+
+inital_value: Wish there was proper vim support in Git bash
+target_value:  is shroper Wi Gthere wvinpit bash am support
+max_depth: 10
+sequence: 3 2 1 1 2 1 2 1 2 1 
+
+inital_value: Potetstappe
+target_value: aptstpePot aptstpePot
+max_depth: 8
+sequence: 0 2 0 0 0 3 
+
+inital_value: Kumocha
+target_value: mochcKumoha Ku
+max_depth: 12
+sequence: 0 3 2 3 2 0 
+
+inital_value: This code is best code
+target_value: dcob esstde  iscoeT hi
+max_depth: 11
+sequence: 0 3 0 3 2 1 3 2 2 
+
+inital_value: En text
+target_value: E nxte
+max_depth: 10
+sequence: 0 3 2 3 2 2 3 2 

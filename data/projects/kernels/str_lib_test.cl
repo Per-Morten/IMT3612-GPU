@@ -6,7 +6,7 @@
 __kernel void strlen_test(__global const char* str,
                           __global uint32_t* strlen)
 {
-    int32_t global_id = get_global_id(0);
+    size_t global_id = get_global_id(0);
 
     if (global_id == 0)
     {
@@ -18,7 +18,7 @@ __kernel void strcmp_test(__global const char* lhs,
                           __global const char* rhs,
                           __global int32_t* result)
 {
-    int32_t global_id = get_global_id(0);
+    size_t global_id = get_global_id(0);
 
     if (global_id == 0)
     {
@@ -26,10 +26,26 @@ __kernel void strcmp_test(__global const char* lhs,
     }
 }
 
+__kernel void strncmp_test(__global const char* lhs,
+                           __global const char* rhs,
+                           __global int32_t* result,
+                           uint32_t compare_count)
+{
+    size_t global_id = get_global_id(0);
+
+    __private char str[PMS_MAX_STRLEN];
+    pms_strcpy_pg(str, lhs);
+
+    if (global_id == 0)
+    {
+        result[global_id] = pms_strncmp_pg(str, rhs, (size_t)compare_count);
+    }
+}
+
 __kernel void strcpy_test(__global const char* src,
                           __global char* dest)
 {
-    int32_t global_id = get_global_id(0);
+    size_t global_id = get_global_id(0);
 
     if (global_id == 0)
     {
@@ -37,10 +53,59 @@ __kernel void strcpy_test(__global const char* src,
     }
 }
 
+__kernel void strcat_test(__global const char* src_1,
+                          __global const char* src_2,
+                          __global char* dest)
+{
+    size_t global_id = get_global_id(0);
+
+    if (global_id == 0)
+    {
+        __private char str[PMS_MAX_STRLEN];
+        pms_strcpy_pg(str, src_1);
+        pms_strcat_pg(str, src_2);
+
+        pms_strcpy_gp(dest, str);
+    }
+}
+
+__kernel void strncat_test(__global const char* src_1,
+                           __global const char* src_2,
+                           __global char* dest,
+                           uint32_t max_cat)
+{
+    size_t global_id = get_global_id(0);
+
+    if (global_id == 0)
+    {
+        __private char str[PMS_MAX_STRLEN];
+        pms_strcpy_pg(str, src_1);
+        pms_strncat_pg(str, src_2, max_cat);
+
+        pms_strcpy_gp(dest, str);
+    }
+}
+
+__kernel void strchr_test(__global const char* src,
+                          __global int32_t* dist,
+                          char target)
+{
+    size_t global_id = get_global_id(0);
+
+    if (global_id == 0)
+    {
+        __global const char* ptr = pms_strchr_g(src, target);
+        if (ptr != NULL)
+        {
+            dist[global_id] = ptr - src;
+        }
+    }
+}
+
 __kernel void toupper_test(__global const char* src,
                            __global char* dest)
 {
-    int32_t global_id = get_global_id(0);
+    size_t global_id = get_global_id(0);
 
     if (global_id == 0)
     {
@@ -55,7 +120,7 @@ __kernel void toupper_test(__global const char* src,
 __kernel void tolower_test(__global const char* src,
                            __global char* dest)
 {
-    int32_t global_id = get_global_id(0);
+    size_t global_id = get_global_id(0);
 
     if (global_id == 0)
     {
