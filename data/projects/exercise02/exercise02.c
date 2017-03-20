@@ -59,7 +59,8 @@ pms_create_matrixes(float** lhs, float** rhs, float** result, const size_t count
 }
 
 int
-main(int argc, char** argv)
+main(PMS_UNUSED int argc, 
+     PMS_UNUSED char** argv)
 {
     // Setup device
     cl_device_id device_id;
