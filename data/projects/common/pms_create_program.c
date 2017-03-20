@@ -17,6 +17,8 @@ pms_create_program(cl_context context,
     if (pms_error == PMS_FAILURE)
     {
         PMS_ERROR("Could not read file %s", kernel_filepath);
+        free(kernel_source);
+
         return PMS_FAILURE;
     }
 

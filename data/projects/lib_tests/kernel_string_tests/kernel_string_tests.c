@@ -30,8 +30,7 @@ setup_program(cl_device_id device_id,
 }
 
 int32_t
-run_strlen_test(cl_device_id device_id,
-                cl_context context,
+run_strlen_test(cl_context context,
                 cl_command_queue command_queue,
                 cl_program program)
 {
@@ -94,8 +93,7 @@ run_strlen_test(cl_device_id device_id,
 }
 
 int32_t
-run_strcmp_test(cl_device_id device_id,
-                cl_context context,
+run_strcmp_test(cl_context context,
                 cl_command_queue command_queue,
                 cl_program program)
 {
@@ -161,8 +159,7 @@ run_strcmp_test(cl_device_id device_id,
 }
 
 int32_t
-run_strncmp_test(cl_device_id device_id,
-                 cl_context context,
+run_strncmp_test(cl_context context,
                  cl_command_queue command_queue,
                  cl_program program)
 {
@@ -232,8 +229,7 @@ run_strncmp_test(cl_device_id device_id,
 }
 
 int32_t
-run_strcpy_test(cl_device_id device_id,
-                cl_context context,
+run_strcpy_test(cl_context context,
                 cl_command_queue command_queue,
                 cl_program program)
 {
@@ -293,8 +289,7 @@ run_strcpy_test(cl_device_id device_id,
 }
 
 int32_t
-run_strcat_test(cl_device_id device_id,
-                cl_context context,
+run_strcat_test(cl_context context,
                 cl_command_queue command_queue,
                 cl_program program)
 {
@@ -366,8 +361,7 @@ run_strcat_test(cl_device_id device_id,
 }
 
 int32_t
-run_strncat_test(cl_device_id device_id,
-                 cl_context context,
+run_strncat_test(cl_context context,
                  cl_command_queue command_queue,
                  cl_program program)
 {
@@ -441,8 +435,7 @@ run_strncat_test(cl_device_id device_id,
 }
 
 int32_t
-run_strchr_test(cl_device_id device_id,
-                cl_context context,
+run_strchr_test(cl_context context,
                 cl_command_queue command_queue,
                 cl_program program)
 {
@@ -510,8 +503,7 @@ run_strchr_test(cl_device_id device_id,
 }
 
 int32_t
-run_toupper_test(cl_device_id device_id,
-                 cl_context context,
+run_toupper_test(cl_context context,
                  cl_command_queue command_queue,
                  cl_program program)
 {
@@ -574,8 +566,7 @@ run_toupper_test(cl_device_id device_id,
 }
 
 int32_t
-run_tolower_test(cl_device_id device_id,
-                 cl_context context,
+run_tolower_test(cl_context context,
                  cl_command_queue command_queue,
                  cl_program program)
 {
@@ -638,7 +629,8 @@ run_tolower_test(cl_device_id device_id,
 }
 
 int
-main(int argc, char** argv)
+main(PMS_UNUSED int argc, 
+     PMS_UNUSED char** argv)
 {
     cl_device_id device_id;
     cl_context context;
@@ -654,7 +646,7 @@ main(int argc, char** argv)
 
     const size_t number_of_tests = 9;
     size_t success_count = number_of_tests;
-    if (run_strlen_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_strlen_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: strlen");
     }
@@ -663,7 +655,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: strlen!");
     }
-    if (run_strcmp_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_strcmp_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: strcmp");
     }
@@ -672,7 +664,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: strcmp!");
     }
-    if (run_strncmp_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_strncmp_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: strncmp");
     }
@@ -681,7 +673,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: strncmp!");
     }
-    if (run_strcpy_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_strcpy_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: strcpy");
     }
@@ -690,7 +682,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: strcpy!");
     }
-    if (run_strcat_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_strcat_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: strcat");
     }
@@ -699,7 +691,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: strcat!");
     }
-    if (run_strncat_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_strncat_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: strncat");
     }
@@ -708,7 +700,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: strncat!");
     }
-    if (run_strchr_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_strchr_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: strchr");
     }
@@ -717,7 +709,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: strchr!");
     }
-    if (run_toupper_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_toupper_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: toupper");
     }
@@ -726,7 +718,7 @@ main(int argc, char** argv)
         --success_count;
         PMS_WARN("Failed test: toupper!");
     }
-    if (run_tolower_test(device_id, context, command_queue, program) == PMS_SUCCESS)
+    if (run_tolower_test(context, command_queue, program) == PMS_SUCCESS)
     {
         PMS_INFO("Passed test: tolower");
     }

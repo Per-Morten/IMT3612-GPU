@@ -47,7 +47,7 @@ pms_string_twist_4(char* buffer,
 {
     char* space = strchr(base_str, ' ');
     size_t distance = (space && *space) ? 
-                       space - base_str : (size_t)-1;
+                       (size_t)(space - base_str) : (size_t)-1;
     
     strcpy(buffer, base_str + distance + 1);
     strcat(buffer, " ");
