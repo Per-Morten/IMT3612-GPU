@@ -285,7 +285,8 @@ free_string_puzzles(pms_host_container* containers, const size_t count)
 }
 
 int
-main(int argc, char** argv)
+main(PMS_UNUSED int argc, 
+     PMS_UNUSED char** argv)
 {
     const size_t max_string_size = 1024;
     const size_t max_sequence_size = 100;
