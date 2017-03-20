@@ -58,7 +58,8 @@ test_string(const char* base_str, const char* target,
 }
 
 int
-main(int argc, char** argv)
+main(PMS_UNUSED int argc, 
+     PMS_UNUSED char** argv)
 {
     const size_t number_of_tests = 10;
     size_t success_count = number_of_tests;
