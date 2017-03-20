@@ -31,6 +31,7 @@ typedef struct
     char* target_str;
     uint32_t* sequence; // pointer to where to store the result sequence.
     uint32_t sequence_count;
+    uint32_t max_depth;
     size_t max_sequence_size;
     size_t max_string_size;
 } pms_host_puzzle_container;
@@ -166,6 +167,7 @@ copy_arguments(cl_command_queue command_queue,
 
 int32_t
 set_arguments(cl_kernel kernel,
+              uint32_t max_depth,
               cl_mem d_base_str,
               cl_mem d_target_str,
               cl_mem d_sequence,
@@ -176,8 +178,9 @@ set_arguments(cl_kernel kernel,
     error |= clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_base_str);
     error |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_target_str);
     error |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_root);
-    error |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &d_sequence);
-    error |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &d_sequence_count);
+    error |= clSetKernelArg(kernel, 3, sizeof(uint32_t), &max_depth);
+    error |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &d_sequence);
+    error |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &d_sequence_count);
     PMS_CHECK_CL_ERROR(error, "set kernel arguments");
     return PMS_SUCCESS;    
 }
@@ -232,6 +235,7 @@ run_puzzle_solver(pms_cl_api api,
                    event_queue);
 
     set_arguments(kernel,
+                  h_container->max_depth,
                   d_container.base_str,
                   d_container.target_str,
                   d_container.sequence,
@@ -285,6 +289,8 @@ get_string_puzzles(pms_host_puzzle_container** out_containers,
         " is shroper Wi Gthere wvinpit bash am support", "aptstpePot aptstpePot", "mochcKumoha Ku", 
         "dcob esstde  iscoeT hi", "E nxte"
     };
+    
+    const size_t max_depths[] = {10, 10, 10, 7, 10, 10, 5, 10, 8, 12, 11, 10};
 
     *out_count = sizeof(bases) / sizeof(bases[0]);
     (*out_containers) = malloc((*out_count) * sizeof(pms_host_puzzle_container));
@@ -299,6 +305,8 @@ get_string_puzzles(pms_host_puzzle_container** out_containers,
         strcpy(ptr->target_str, targets[i]);
 
         ptr->sequence = malloc(max_sequence_size * sizeof(uint32_t));
+        ptr->sequence_count = 0; 
+        ptr->max_depth = max_depths[i];
 
         ptr->max_string_size = max_string_size;
         ptr->max_sequence_size = max_sequence_size;
