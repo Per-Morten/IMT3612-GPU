@@ -200,7 +200,8 @@ check_results(float** vecs, const size_t vec_length)
 }
 
 int
-main(int argc, char** argv)
+main(PMS_UNUSED int argc, 
+     PMS_UNUSED char** argv)
 {
     PMS_INFO("Setting up OpenCL");
     cl_device_id device_id;
