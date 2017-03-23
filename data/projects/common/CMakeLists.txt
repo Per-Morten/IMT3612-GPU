@@ -13,4 +13,7 @@ add_library(pms_common
     pms_setup_opencl_cpu.c
 )
 
-target_link_libraries(pms_common OpenCL)
+target_link_libraries(pms_common 
+    OpenCL 
+    m # For math
+    )
