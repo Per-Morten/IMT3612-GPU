@@ -10,7 +10,7 @@
 #include <pms_common.h>
 //
 //  define VERBOSE if you want to print info about work groups sizes
-//#define  VERBOSE 1
+#define  VERBOSE 1
 #ifdef VERBOSE
      extern const char* pms_stringify_error(const cl_int);
 #endif
@@ -23,6 +23,8 @@ pms_output_device_info(const cl_device_id device_id)
     cl_uint comp_units;                 // the max number of compute units on a device
     cl_char vendor_name[1024] = {0};    // string to hold vendor name for compute device
     cl_char device_name[1024] = {0};    // string to hold name of compute device
+    cl_char opencl_c_version[1024] = {0};
+
 #ifdef VERBOSE
     cl_uint          max_work_itm_dims;
     size_t           max_wrkgrp_size;
@@ -108,9 +110,19 @@ pms_output_device_info(const cl_device_id device_id)
     }
    PMS_INFO("work group, work item information");
    PMS_INFO("max loc dim ");
-   for(int i=0; i< max_work_itm_dims; i++)
-     PMS_INFO(" %d ",(int)(*(max_loc_size+i)));
-   PMS_INFO("Max work group size = %d",(int)max_wrkgrp_size);
+   for(size_t i=0; i < max_work_itm_dims; i++)
+     PMS_INFO(" %zu ",(size_t)(*(max_loc_size+i)));
+   PMS_INFO("Max work group size = %d",(size_t)max_wrkgrp_size);
+   free(max_loc_size);
+
+   error = clGetDeviceInfo(device_id, CL_DEVICE_OPENCL_C_VERSION, sizeof(opencl_c_version), &opencl_c_version, NULL);
+   if (error != CL_SUCCESS)
+   {
+        PMS_WARN("Error: Failed to access opencl c version!");
+        return PMS_FAILURE;
+   }
+   PMS_INFO("opencl c version: %s", opencl_c_version);
+
 #endif
 
     return PMS_SUCCESS;
