@@ -3,10 +3,37 @@
 #include <pms_string_twist.h>
 
 #ifndef PMS_TWIST_MAX_LEN
-#define PMS_TWIST_MAX_LEN 1024
+#define PMS_TWIST_MAX_LEN 64
 #endif
 
-__global atomic_uint g_found_flag = ATOMIC_VAR_INIT(0);
+#ifndef PMS_TWIST_MAX_FUNCTION_COUNT
+#define PMS_TWIST_MAX_FUNCTION_COUNT 4
+#endif
+
+atomic_uint g_found_flag = ATOMIC_VAR_INIT(0);
+
+__global uint8_t global_memory[4][4096];
+
+bool
+claim_first()
+{
+    uint32_t expected = 0;
+
+    // Check if someone has already found a solution.
+    while (!atomic_compare_exchange_weak_explicit(&g_found_flag, 
+                                                  &expected,
+                                                  1,
+                                                  memory_order_acq_rel,
+                                                  memory_order_acquire))
+    {
+        // If a solution has already been found, I can't claim first.
+        if (expected)
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 __kernel void reset_flag()
 {
@@ -21,7 +48,6 @@ __kernel void bottoms_up_search(__global const char* restrict base_str,
                                 __global uint32_t* restrict out_sequence_count)
 {
     __private uint32_t sequence[PMS_TWIST_MAX_LEN] = {0};
-    pms_memset_p(sequence, 0, max_depth * sizeof(uint32_t));
 
     sequence[0] = root_value[get_global_id(0)];
 
@@ -29,7 +55,7 @@ __kernel void bottoms_up_search(__global const char* restrict base_str,
     uint32_t already_found = atomic_load_explicit(&g_found_flag, 
                                                   memory_order_acquire);
                               
-    const size_t last_legal_value = 3;
+    const size_t last_legal_value = PMS_TWIST_MAX_FUNCTION_COUNT - 1;
 
     while (sequence_count != 1 && !already_found)
     {
@@ -41,20 +67,9 @@ __kernel void bottoms_up_search(__global const char* restrict base_str,
 
         if (correct_sequence)
         {
-            uint32_t expected = 0;
-
-            // Check if someone has already found a solution.
-            while (!atomic_compare_exchange_weak_explicit(&g_found_flag, 
-                                                          &expected,
-                                                          1,
-                                                          memory_order_acq_rel,
-                                                          memory_order_acquire))
+            if (!claim_first()) 
             {
-                // If a solution is found I will leave that memory area alone.
-                if (expected)
-                {
-                    return;
-                }
+                return;
             }
 
             *out_sequence_count = sequence_count;
