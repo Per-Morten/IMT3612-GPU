@@ -1,5 +1,6 @@
 #include <pms_lib_memory.h>
 #include <pms_lib_string.h>
+#include <pms_lib_allocator.h>
 #include <pms_string_twist.h>
 
 #ifndef PMS_TWIST_MAX_LEN
@@ -95,3 +96,63 @@ __kernel void bottoms_up_search(__global const char* restrict base_str,
     }
 }
 
+__kernel void depth_first_search(__global const char* restrict base_str,
+                                 __global const char* restrict target_str,
+                                 __global const uint32_t* restrict root_value,
+                                 const uint32_t max_depth,
+                                 __global uint32_t* restrict out_sequence,
+                                 __global uint32_t* restrict out_sequence_count)
+{
+    const size_t global_id = get_global_id(0);
+
+    __private uint32_t len[128] = {0};
+    __global uint32_t* stack[128];
+    size_t head = 0;
+    size_t heap_index = 0;
+
+    len[head] = 1;
+    stack[head] = pms_stack_allocate_g(&global_memory[global_id], &heap_index, sizeof(uint32_t));
+    stack[head++][0] = root_value[global_id];
+
+    uint32_t already_found = atomic_load_explicit(&g_found_flag,
+                                                  memory_order_acquire);
+
+    while (head != 0 && !already_found)
+    {
+        size_t sequence_count = len[--head];
+        private uint32_t sequence[PMS_TWIST_MAX_LEN];
+        pms_memcpy_pg(sequence, stack[head], sequence_count * sizeof(uint32_t));
+        pms_stack_deallocate_g(&global_memory[global_id], &heap_index, sequence_count * sizeof(uint32_t));
+
+        if (sequence_count < max_depth)
+        {
+            for (ptrdiff_t i = PMS_TWIST_MAX_FUNCTION_COUNT - 1; i >= 0; --i)
+            {
+                stack[head] = pms_stack_allocate_g(&global_memory[global_id], &heap_index, (sequence_count + 1) * sizeof(uint32_t));
+                pms_memcpy_gp(stack[head], sequence, sequence_count * sizeof(uint32_t));
+                stack[head][sequence_count] = i;
+                len[head++] = sequence_count + 1;
+            }
+        }
+
+        const bool is_correct_sequence =
+            pms_string_twist_validate_ggp(base_str,
+                                          target_str,
+                                          sequence,
+                                          sequence_count);
+
+        if (is_correct_sequence)
+        {
+            if (!claim_first())
+            {
+                return;
+            }
+
+            *out_sequence_count = sequence_count;
+            pms_memcpy_gp(out_sequence, sequence, sizeof(uint32_t) * sequence_count);
+        }
+
+        already_found = atomic_load_explicit(&g_found_flag,
+                                             memory_order_acquire);
+    }
+}

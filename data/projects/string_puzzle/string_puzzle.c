@@ -362,7 +362,7 @@ main(PMS_UNUSED int argc,
 {
     const char filepath[] = "kernels/string_puzzle.cl";
     const char compiler_args[] = "-Ikernels/pms_lib/ -Ikernels/pms_string_twist/ -Werror -cl-std=CL2.0";
-    const char* kernel_names[] = {"bottoms_up_search"};
+    const char* kernel_names[] = {"bottoms_up_search", "depth_first_search"};
     const size_t max_string_size = 1024;
     const size_t max_sequence_size = 100;
     cl_int error = 0;
