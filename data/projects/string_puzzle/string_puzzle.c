@@ -14,6 +14,7 @@ typedef struct
     cl_context context;
     cl_command_queue command_queue;
     cl_program program;
+    cl_kernel reset_flag;
 } pms_cl_api;
 
 typedef struct
@@ -112,12 +113,12 @@ setup_opencl_memory(pms_cl_api api,
                                            roots, &error);
     PMS_CHECK_CL_ERROR(error, "creating root buffer");
 
-    d_out_container->sequence = clCreateBuffer(api.context, CL_MEM_WRITE_ONLY, 
+    d_out_container->sequence = clCreateBuffer(api.context, CL_MEM_WRITE_ONLY,
                                                sequence_memory_size * sizeof(uint32_t), 
                                                NULL, &error);
     PMS_CHECK_CL_ERROR(error, "creating sequence buffer");
 
-    d_out_container->sequence_count = clCreateBuffer(api.context, CL_MEM_WRITE_ONLY, 
+    d_out_container->sequence_count = clCreateBuffer(api.context, CL_MEM_WRITE_ONLY,
                                                      sizeof(uint32_t), 
                                                      NULL, &error);
     PMS_CHECK_CL_ERROR(error, "creating sequence_count buffer");
@@ -141,9 +142,11 @@ int32_t
 copy_arguments(cl_command_queue command_queue,
                cl_mem d_base_str,
                cl_mem d_target_str,
+               cl_mem d_sequence_count,
                const char* h_base_str,
                const char* h_target_str,
-               cl_event* event_queue)
+               cl_event* event_queue,
+               size_t* event_queue_count)
 {
     const size_t base_len = sizeof(char) * strlen(h_base_str) + 1;
     cl_int error = clEnqueueWriteBuffer(command_queue,
@@ -161,6 +164,17 @@ copy_arguments(cl_command_queue command_queue,
                                  target_len,
                                  h_target_str, 0,
                                  NULL, &event_queue[1]);
+    PMS_CHECK_CL_ERROR(error, "enqueue target_str write");
+
+    uint32_t value = 0;
+    error = clEnqueueFillBuffer(command_queue, 
+                                d_sequence_count, 
+                                &value, sizeof(uint32_t), 
+                                0, sizeof(uint32_t), 0, 
+                                NULL, &event_queue[2]);
+    PMS_CHECK_CL_ERROR(error, "enqueue fill buffer");
+
+    *event_queue_count += 3;
 
     return PMS_SUCCESS;
 }
@@ -211,7 +225,7 @@ validate_sequence(const char* base_str,
                 pms_string_twist_4(scratch_pad, buffer);
                 break;
             default:
-                PMS_WARN("Illegal Sequence");
+                PMS_WARN("Illegal Sequence, sequence: %zu, sequence_count: %zu", sequence[i], sequence_count);
                 break;
         }
         strcpy(buffer, scratch_pad);
@@ -226,13 +240,16 @@ run_puzzle_solver(pms_cl_api api,
                   pms_device_puzzle_container d_container,
                   pms_host_puzzle_container* h_container)
 {
+    size_t event_queue_count = 0;
     cl_event event_queue[5];
     copy_arguments(api.command_queue,
                    d_container.base_str,
                    d_container.target_str,
+                   d_container.sequence_count,
                    h_container->base_str,
                    h_container->target_str,
-                   event_queue);
+                   event_queue,
+                   &event_queue_count);
 
     set_arguments(kernel,
                   h_container->max_depth,
@@ -242,22 +259,34 @@ run_puzzle_solver(pms_cl_api api,
                   d_container.sequence_count,
                   d_container.root);
 
+    const size_t reset_work_size = 1;
+    cl_int error = clEnqueueNDRangeKernel(api.command_queue, api.reset_flag, 1, 
+                                          NULL, &reset_work_size, NULL, 
+                                          0, NULL, &event_queue[event_queue_count++]);
+    PMS_CHECK_CL_ERROR(error, "enqueue clear flag kernel");
+
     const size_t work_size = 4;
-    cl_int error = clEnqueueNDRangeKernel(api.command_queue, kernel, 1, 
+    error = clEnqueueNDRangeKernel(api.command_queue, kernel, 1, 
                                           NULL, &work_size, NULL, 
-                                          2, event_queue, &event_queue[2]);
+                                          event_queue_count, event_queue, &event_queue[event_queue_count]);
+    event_queue_count++;
     PMS_CHECK_CL_ERROR(error, "enqueue kernel");
 
-    error = clEnqueueReadBuffer(api.command_queue, d_container.sequence_count, CL_FALSE, 0, 
-                                sizeof(uint32_t), &h_container->sequence_count, 3, event_queue, NULL);
+    error = clEnqueueReadBuffer(api.command_queue, d_container.sequence_count, CL_FALSE, 
+                                0, sizeof(uint32_t), &h_container->sequence_count, 
+                                event_queue_count, event_queue, NULL);
     PMS_CHECK_CL_ERROR(error, "enqueue sequence count read");
 
-    error = clEnqueueReadBuffer(api.command_queue, d_container.sequence, CL_FALSE, 0,
-                                h_container->max_sequence_size, h_container->sequence, 3, event_queue, NULL);
+    error = clEnqueueReadBuffer(api.command_queue, d_container.sequence, CL_FALSE, 
+                                0, h_container->max_sequence_size, h_container->sequence, 
+                                event_queue_count, event_queue, NULL);
+
     PMS_CHECK_CL_ERROR(error, "enqueue sequence read");
 
     error = clFinish(api.command_queue);
     PMS_CHECK_CL_ERROR(error, "waiting for cl to finish");
+
+    PMS_DEBUG("Sequence count: %zu", h_container->sequence_count);
 
     if (validate_sequence(h_container->base_str, h_container->target_str, 
                           h_container->sequence, h_container->sequence_count))
@@ -276,7 +305,7 @@ get_string_puzzles(pms_host_puzzle_container** out_containers,
 {
     const char* bases[] = 
     {
-        "1234 5678", "Simon McCallum", "Multithreaded", "Game Programming",
+        "Blah","1234 5678", "Simon McCallum", "Test", "Multithreaded", "Game Programming",
         "Programming Patterns", "CppCon 2016", "FTCP Engine Is Best Engine",
         "Wish there was proper vim support in Git bash", "Potetstappe", "Kumocha", 
         "This code is best code", "En text"
@@ -284,13 +313,13 @@ get_string_puzzles(pms_host_puzzle_container** out_containers,
 
     const char* targets[] =
     {
-        "6781 2345", "monCa imlSMclu", "tithreaeadedMultiMuld edhr", "Prmminograg Game", 
+        "Hah","6781 2345", "monCa imlSMclu", "Tet", "tithreaeadedMultiMuld edhr", "Prmminograg Game", 
         "nsrammiProgngPatter ", "Cp0 16nopC", " EngineFTCP ngine Es BestI", 
         " is shroper Wi Gthere wvinpit bash am support", "aptstpePot aptstpePot", "mochcKumoha Ku", 
         "dcob esstde  iscoeT hi", "E nxte"
     };
     
-    const size_t max_depths[] = {10, 10, 10, 7, 10, 10, 5, 10, 8, 12, 11, 10};
+    const size_t max_depths[] = {10, 10, 10, 10, 10, 7, 10, 10, 5, 10, 8, 12, 11, 10};
 
     *out_count = sizeof(bases) / sizeof(bases[0]);
     (*out_containers) = malloc((*out_count) * sizeof(pms_host_puzzle_container));
@@ -332,7 +361,7 @@ main(PMS_UNUSED int argc,
      PMS_UNUSED char** argv)
 {
     const char filepath[] = "kernels/string_puzzle.cl";
-    const char compiler_args[] = "-Ikernels/pms_lib/ -Ikernels/pms_string_twist/ -Werror";
+    const char compiler_args[] = "-Ikernels/pms_lib/ -Ikernels/pms_string_twist/ -Werror -cl-std=CL2.0";
     const char* kernel_names[] = {"bottoms_up_search"};
     const size_t max_string_size = 1024;
     const size_t max_sequence_size = 100;
@@ -344,14 +373,17 @@ main(PMS_UNUSED int argc,
     setup_program(api.device_id, api.context, &api.program, filepath, compiler_args);
 
     PMS_DEBUG("creating kernels");
+    api.reset_flag = clCreateKernel(api.program, "reset_flag", &error);
+    PMS_CHECK_CL_ERROR(error, "Creating set flag");
+
     const size_t kernel_count = sizeof(kernel_names) / sizeof(kernel_names[0]);
     cl_kernel* kernel = malloc(sizeof(cl_kernel) * kernel_count);
     
     for (size_t i = 0; i < kernel_count; ++i)
     {
         kernel[i] = clCreateKernel(api.program,
-                                        kernel_names[i],
-                                        &error);
+                                   kernel_names[i],
+                                   &error);
         PMS_CHECK_CL_ERROR(error, "create kernel");
     }
 
