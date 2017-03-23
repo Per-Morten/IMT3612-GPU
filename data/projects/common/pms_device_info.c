@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <CL/cl.h>
 #include <pms_common.h>
 //
@@ -23,7 +24,6 @@ pms_output_device_info(const cl_device_id device_id)
     cl_uint comp_units;                 // the max number of compute units on a device
     cl_char vendor_name[1024] = {0};    // string to hold vendor name for compute device
     cl_char device_name[1024] = {0};    // string to hold name of compute device
-    cl_char opencl_c_version[1024] = {0};
 
 #ifdef VERBOSE
     cl_uint          max_work_itm_dims;
@@ -68,18 +68,73 @@ pms_output_device_info(const cl_device_id device_id)
     }
     PMS_INFO("%s %s ",type, vendor_name);
 
+    cl_char opencl_c_version[1024] = {0};
+    error = clGetDeviceInfo(device_id, CL_DEVICE_OPENCL_C_VERSION, sizeof(opencl_c_version), &opencl_c_version, NULL);
+    if (error != CL_SUCCESS)
+    {
+        PMS_WARN("Error: Failed to access opencl c version!");
+        return PMS_FAILURE;
+    }
+    PMS_INFO("Running opencl c version: %s", opencl_c_version);
+
+    cl_char driver_version[1024] = {0};
+    error = clGetDeviceInfo(device_id, CL_DRIVER_VERSION, sizeof(driver_version), &driver_version, NULL);
+    if (error != CL_SUCCESS)
+    {
+        PMS_WARN("Error: Failed to access opencl driver version!");
+        return PMS_FAILURE;
+    }
+    PMS_INFO("Driver version: %s", driver_version);
+
     error = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &comp_units, NULL);
     if (error != CL_SUCCESS)
     {
         PMS_WARN("Error: Failed to access device number of compute units!");
         return PMS_FAILURE;
     }
-    PMS_INFO(" with a max of %d compute units",comp_units);
+    PMS_INFO("Max of %u compute units",comp_units);
+
+    cl_ulong global_memory_size = 0;
+    error = clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &global_memory_size, NULL);
+    if (error != CL_SUCCESS)
+    {
+        PMS_WARN("Error: Failed to access device global memory size!");
+        return PMS_FAILURE;
+    }
+    PMS_INFO("Global memory size: 2 ^ %zu bytes", (size_t)log2f(global_memory_size));
+
+    cl_ulong global_cache_size = 0;
+    error = clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(cl_ulong), &global_cache_size, NULL);
+    if (error != CL_SUCCESS)
+    {
+        PMS_WARN("Error: Failed to access device global cache size!");
+        return PMS_FAILURE;
+    }
+    PMS_INFO("Global cache size: 2 ^ %zu bytes", (size_t)log2f(global_cache_size));
+
+    cl_uint global_cacheline_size = 0;
+    error = clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cl_uint), &global_cacheline_size, NULL);
+    if (error != CL_SUCCESS)
+    {
+        PMS_WARN("Error: Failed to access device global cacheline size!");
+        return PMS_FAILURE;
+    }
+    PMS_INFO("Global cache line size: 2 ^ %zu bytes", (size_t)log2f(global_cacheline_size));
+
+    cl_ulong local_memory_size = 0;
+    error = clGetDeviceInfo(device_id, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &local_memory_size, NULL);
+    if (error != CL_SUCCESS)
+    {
+        PMS_WARN("Error: Failed to access device local memory size!");
+        return PMS_FAILURE;
+    }
+    PMS_INFO("Local memory size: 2 ^ %zu bytes", (size_t)log2f(local_memory_size));
 
 #ifdef VERBOSE
 //
 // Optionally print information about work group sizes
 //
+    PMS_INFO("Work group sizes:");
     error = clGetDeviceInfo( device_id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), 
                                &max_work_itm_dims, NULL);
     if (error != CL_SUCCESS)
@@ -115,13 +170,7 @@ pms_output_device_info(const cl_device_id device_id)
    PMS_INFO("Max work group size = %d",(size_t)max_wrkgrp_size);
    free(max_loc_size);
 
-   error = clGetDeviceInfo(device_id, CL_DEVICE_OPENCL_C_VERSION, sizeof(opencl_c_version), &opencl_c_version, NULL);
-   if (error != CL_SUCCESS)
-   {
-        PMS_WARN("Error: Failed to access opencl c version!");
-        return PMS_FAILURE;
-   }
-   PMS_INFO("opencl c version: %s", opencl_c_version);
+
 
 #endif
 
