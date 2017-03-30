@@ -2,6 +2,7 @@
 #include <CL/cl.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <pms_clock.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Used to stop warnings on variables I know are unused,

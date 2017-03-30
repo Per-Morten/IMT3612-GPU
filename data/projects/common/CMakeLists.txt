@@ -11,6 +11,7 @@ add_library(pms_common
     pms_log.c
     pms_read_kernel.c
     pms_setup_opencl_cpu.c
+    pms_clock.cpp
 )
 
 target_link_libraries(pms_common 
