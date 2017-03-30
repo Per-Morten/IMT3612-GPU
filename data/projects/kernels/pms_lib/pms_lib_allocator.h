@@ -28,3 +28,5 @@ pms_stack_deallocate_##postfix(memory_region void* memory,                  \
 PMS_LIB_STACK_DEALLOCATE_GENERATOR(__global,   g);
 PMS_LIB_STACK_DEALLOCATE_GENERATOR(__local,    l);
 PMS_LIB_STACK_DEALLOCATE_GENERATOR(__private,  p);
+
+#endif
